@@ -47,7 +47,10 @@
     </div>
     <div class="tools-bar">
       <div class="search-box">
-        <input type="text" id="hexSearch" placeholder="搜索卦名、卦辞、关键词…" autocomplete="off">
+        <!-- 隐藏字段吸收浏览器自动填充 -->
+        <input type="text" name="fake-username" style="position:absolute;opacity:0;height:0;width:0;" tabindex="-1" autocomplete="username">
+        <input type="password" name="fake-password" style="position:absolute;opacity:0;height:0;width:0;" tabindex="-1" autocomplete="current-password">
+        <input type="text" id="hexSearch" placeholder="搜索卦名、卦辞、关键词…" autocomplete="off" readonly>
       </div>
       <div class="filter-tabs">
         <button class="chip active" data-filter="all">全部</button>

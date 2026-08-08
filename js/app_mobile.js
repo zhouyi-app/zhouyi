@@ -875,7 +875,22 @@
 
     // 速查
     renderHexGrid();
-    $("#mHexSearch").addEventListener("input", renderHexGrid);
+    const mHexSearchInput = $("#mHexSearch");
+    // 阻止浏览器自动填充：聚焦时才解除 readonly
+    mHexSearchInput.addEventListener("focus", () => { mHexSearchInput.readOnly = false; });
+    // 终极保险：Chrome 常在页面加载完成（load 事件）后才填充表单，
+    // 这里在多个时间点强制清空，直到用户真正开始输入为止
+    var mUserTyped = false;
+    mHexSearchInput.addEventListener("input", () => { mUserTyped = true; });
+    var mClearAutofill = () => { if (!mUserTyped) mHexSearchInput.value = ""; };
+    mClearAutofill();
+    window.addEventListener("load", function () {
+      setTimeout(mClearAutofill, 100);
+      setTimeout(mClearAutofill, 500);
+      setTimeout(mClearAutofill, 1500);
+      setTimeout(mClearAutofill, 3000);
+    });
+    mHexSearchInput.addEventListener("input", renderHexGrid);
 
     // 每日
     renderDaily(HEXAGRAMS[dailyIndex(new Date())].id);

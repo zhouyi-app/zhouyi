@@ -88,7 +88,10 @@
       <p>点任意一卦看全文详解与白话。</p>
     </div>
     <div class="m-search">
-      <input type="text" id="mHexSearch" placeholder="搜索卦名、卦辞、关键词…">
+      <!-- 隐藏字段吸收浏览器自动填充 -->
+      <input type="text" name="fake-username" style="position:absolute;opacity:0;height:0;width:0;" tabindex="-1" autocomplete="username">
+      <input type="password" name="fake-password" style="position:absolute;opacity:0;height:0;width:0;" tabindex="-1" autocomplete="current-password">
+      <input type="text" id="mHexSearch" placeholder="搜索卦名、卦辞、关键词…" autocomplete="off" readonly>
     </div>
     <div id="mHexGrid" class="m-hex-grid"></div>
   </section>

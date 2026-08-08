@@ -1379,7 +1379,22 @@
     // 总览
     renderOverviewGrid();
     renderPalaceList();
-    $("#hexSearch").addEventListener("input", () => {
+    const hexSearchInput = $("#hexSearch");
+    // 阻止浏览器自动填充：聚焦时才解除 readonly
+    hexSearchInput.addEventListener("focus", () => { hexSearchInput.readOnly = false; });
+    // 终极保险：Chrome 常在页面加载完成（load 事件）后才填充表单，
+    // 这里在多个时间点强制清空，直到用户真正开始输入为止
+    var userTyped = false;
+    hexSearchInput.addEventListener("input", () => { userTyped = true; });
+    var clearAutofill = () => { if (!userTyped) hexSearchInput.value = ""; };
+    clearAutofill();
+    window.addEventListener("load", function () {
+      setTimeout(clearAutofill, 100);
+      setTimeout(clearAutofill, 500);
+      setTimeout(clearAutofill, 1500);
+      setTimeout(clearAutofill, 3000);
+    });
+    hexSearchInput.addEventListener("input", () => {
       setOverviewMode("all");
       renderOverviewGrid();
     });
