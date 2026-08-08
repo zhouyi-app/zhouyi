@@ -55,13 +55,16 @@
   function loadRecords() {
     try { state.records = JSON.parse(localStorage.getItem(REC_KEY)) || []; }
     catch (e) { state.records = []; }
+    // 清洗脏数据：过滤 null / 非对象元素，避免启动崩溃
+    if (!Array.isArray(state.records)) state.records = [];
+    state.records = state.records.filter(r => r && typeof r === "object");
     // 旧记录补上唯一 id，便于云同步去重
     let patched = false;
     state.records.forEach(r => { if (!r.rid) { r.rid = ZhouyiSync.genRid(); patched = true; } });
     if (patched) saveRecords();
   }
   function saveRecords() {
-    localStorage.setItem(REC_KEY, JSON.stringify(state.records));
+    try { localStorage.setItem(REC_KEY, JSON.stringify(state.records)); } catch (e) { /* 隐私模式等异常忽略 */ }
   }
 
   /* ================= 起卦引擎 ================= */
@@ -204,6 +207,8 @@
     if (state.coinThrows.length >= 6) return;
     $("#mBtnCoin").disabled = true;
     playAnim("coin", () => {
+      // 动画期间用户可能切换了起卦方法，此时丢弃本次结果，避免计数错乱
+      if (state.method !== "coin") return;
       const r = throwCoins();
       state.coinThrows.push(r);
       const n = state.coinThrows.length;
@@ -263,10 +268,10 @@
   function buildFromTrigrams(upper, lower, moving, methodName, desc) {
     const hex = getHexByTrigrams(upper, lower);
     if (!hex) { alert("起卦数据有误，请重试。"); return; }
-    let arr = (TRIGRAMS[lower].lines + TRIGRAMS[upper].lines).split("");
-    arr[moving] = arr[moving] === "1" ? "0" : "1";
+    // 构造原始本卦线；动爻由 castResult 统一翻转（修复本卦/变卦颠倒 bug）
+    let lines = TRIGRAMS[lower].lines + TRIGRAMS[upper].lines;
     playAnim("plum", () => {
-      castResult({ lines: arr.join(""), moving: [moving], methodName: methodName, extraDesc: desc, question: readQ() });
+      castResult({ lines: lines, moving: [moving], methodName: methodName, extraDesc: desc, question: readQ() });
     });
   }
 
@@ -295,6 +300,7 @@
     const moving = cast.moving || [];
     const t = linesToTrigrams(lines);
     const hex = getHexByTrigrams(t.upper, t.lower);
+    if (!hex) { alert("卦象数据有误，无法解卦，请重新起卦。"); return; }
     const changed = changeHex(lines, moving);
     const hu = huHex(lines), cuo = cuoHex(lines), zong = zongHex(lines);
     const now = new Date();
@@ -332,6 +338,8 @@
         syncStatus.textContent = "同步中…";
         syncStatus.className = "m-sync-status syncing";
         ZhouyiSync.pushRecord(rec).then(function() {
+          // 云端返回后回填 cloudId 并落盘，避免重复推送/丢失关联
+          saveRecords();
           syncStatus.textContent = "✓ 已同步";
           syncStatus.className = "m-sync-status success";
           setTimeout(() => { syncStatus.style.display = "none"; }, 2000);
@@ -407,12 +415,16 @@
     }
 
     html += `<div class="m-sec-title">体用生克（你与事情的相处模式）</div>`;
+    if (moving.length === 0) {
+      html += `<div class="m-tip">「体」= 你自己，「用」= 你要面对的事。本卦<b>六爻皆静，没有动爻，传统上不分体用</b>，直接按卦辞与整体卦意理解即可。</div>`;
+    } else {
     html += `<div class="m-tip">「体」= 你自己，「用」= 你要面对的事。</div>`;
     html += `<div class="m-tiyong">
       <div class="m-ty-cell"><div class="ty-name">体卦 · ${ty.ti}</div><span class="m-tg-sym">${triSym(ty.ti)}</span><small>${ty.tiEl}</small></div>
       <div class="m-ty-cell"><div class="ty-name">用卦 · ${ty.yong}</div><span class="m-tg-sym">${triSym(ty.yong)}</span><small>${ty.yongEl}</small></div>
       <div class="m-ty-cell"><div class="ty-name">${ty.relation}</div><span class="m-badge ${ty.verdict.indexOf("凶") >= 0 ? "bad" : (ty.verdict.indexOf("吉") >= 0 ? "good" : "mid")}">${ty.verdict}</span><small>${ty.ti}${ty.tiEl}对${ty.yong}${ty.yongEl}</small></div>
     </div>`;
+    }
 
     if (hasChange) {
       html += `<div class="m-sec-title">之卦简解</div>`;
@@ -672,6 +684,8 @@
       valid.forEach(r => {
         if (seen[r.time]) { dup++; return; }
         seen[r.time] = true;
+        if (!r.rid) r.rid = ZhouyiSync.genRid(); // 补 id，确保能参与云同步
+        if (!r.moving) r.moving = [];             // 补默认字段，避免渲染/回放崩溃
         state.records.push(r);
         added++;
       });
@@ -774,9 +788,21 @@
       $("#mLoginEmail").value = "";
       $("#mLoginPwd").value = "";
       renderAuthUI();
-      return syncAll();
-    }).then(function () {
       btn.disabled = false;
+      // 同步与登录解耦：同步失败用状态条提示，不影响登录成功状态
+      const syncStatus = $("#mSyncStatus");
+      syncStatus.style.display = "inline-block";
+      syncStatus.textContent = "正在同步记录…";
+      syncStatus.className = "m-sync-status syncing";
+      syncAll().then(function (res) {
+        syncStatus.textContent = (res.added > 0 || res.pushed > 0) ? `✓ 同步完成 (+${res.added}/↑${res.pushed})` : "✓ 已是最新";
+        syncStatus.className = "m-sync-status success";
+        setTimeout(() => { syncStatus.style.display = "none"; }, 3000);
+      }).catch(function (err) {
+        syncStatus.textContent = "✗ 同步失败：" + ((err && err.message) || "稍后再试");
+        syncStatus.className = "m-sync-status error";
+        setTimeout(() => { syncStatus.style.display = "none"; }, 4000);
+      });
     }).catch(function (err) {
       btn.disabled = false;
       tip.textContent = (err && err.message) || "操作失败，请稍后再试。";

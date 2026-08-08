@@ -76,7 +76,8 @@
     const outer = lines.slice(2, 5);   // 3,4,5爻 → 互卦之上卦
     const t = linesToTrigrams(inner + outer);
     const hex = getHexByTrigrams(t.upper, t.lower);
-    return { lines: outer + inner, hex: hex, upper: t.upper, lower: t.lower };
+    // lines 约定为"下卦+上卦"（自下而上），故完整线为 inner + outer
+    return { lines: inner + outer, hex: hex, upper: t.upper, lower: t.lower };
   }
 
   /** 错卦（对卦） */
@@ -110,7 +111,8 @@
       const liuqin = getLiuqin(me, zhiElement);
       rows.push({
         pos: i + 1,
-        yaoName: (lines[i] === "1" ? "九" : "六") + ["初", "二", "三", "四", "五", "上"][i],
+        // 爻名规范：初爻称"初九/初六"，上爻称"上九/上六"，中间称"九二/六二"等
+        yaoName: i === 0 ? (lines[i] === "1" ? "初九" : "初六") : (i === 5 ? (lines[i] === "1" ? "上九" : "上六") : (lines[i] === "1" ? "九" : "六") + ["二", "三", "四", "五"][i - 1]),
         ganZhi: ganZhi,
         zhiElement: zhiElement,
         liuqin: liuqin,
@@ -184,11 +186,9 @@
     return XT_NUM[v];
   }
 
-  /** 梅花易数：由上下卦与动爻构造六爻线 */
+  /** 梅花易数：由上下卦与动爻构造六爻线（返回原始本卦线，动爻统一由 changeHex 处理） */
   function plumLines(upperName, lowerName, movingPos) {
-    let arr = (TRIGRAMS[lowerName].lines + TRIGRAMS[upperName].lines).split("");
-    arr[movingPos] = arr[movingPos] === "1" ? "0" : "1";
-    return arr.join("");
+    return TRIGRAMS[lowerName].lines + TRIGRAMS[upperName].lines;
   }
 
   /* ================= 状态 ================= */
@@ -209,13 +209,16 @@
   function loadRecords() {
     try { state.records = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
     catch (e) { state.records = []; }
+    // 清洗脏数据：过滤 null / 非对象元素，避免启动崩溃
+    if (!Array.isArray(state.records)) state.records = [];
+    state.records = state.records.filter(r => r && typeof r === "object");
     // 旧记录补上唯一 id，便于云同步去重
     let patched = false;
     state.records.forEach(r => { if (!r.rid) { r.rid = ZhouyiSync.genRid(); patched = true; } });
     if (patched) saveRecords();
   }
   function saveRecords() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.records));
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.records)); } catch (e) { /* 隐私模式等异常忽略 */ }
   }
 
   /* ================= 导航 ================= */
@@ -438,6 +441,8 @@
     if (state.coinThrows.length >= 6) return;
     $("#btnThrows").disabled = true;
     playCastAnim("coin", () => {
+      // 动画期间用户可能切换了起卦方法，此时丢弃本次结果，避免计数错乱
+      if (state.method !== "coin") return;
       const r = throwCoins();
       state.coinThrows.push(r);
       const n = state.coinThrows.length;
@@ -457,6 +462,8 @@
     if (state.yarrowYaos.length >= 6) return;
     $("#btnYarrow").disabled = true;
     playCastAnim("yarrow", () => {
+      // 动画期间用户可能切换了起卦方法，此时丢弃本次结果，避免计数错乱
+      if (state.method !== "yarrow") return;
       const y = yarrowYao();
       state.yarrowYaos.push(y);
       const idx = state.yarrowYaos.length;
@@ -562,6 +569,7 @@
     const moving = cast.moving || [];
     const question = cast.question || "";
     const hex = getHexByTrigrams(linesToTrigrams(lines).upper, linesToTrigrams(lines).lower);
+    if (!hex) { alert("卦象数据有误，无法解卦，请重新起卦。"); return; }
     const changed = changeHex(lines, moving);
     const hu = huHex(lines);
     const cuo = cuoHex(lines);
@@ -603,6 +611,8 @@
         indicator.textContent = "同步中…";
         indicator.className = "sync-status-indicator syncing";
         ZhouyiSync.pushRecord(record).then(function() {
+          // 云端返回后回填 cloudId 并落盘，避免重复推送/丢失关联
+          saveRecords();
           indicator.textContent = "✓ 已同步";
           indicator.className = "sync-status-indicator success";
           setTimeout(() => { indicator.style.display = "none"; }, 2000);
@@ -702,8 +712,11 @@
       html += `<h4>当用之辞</h4><div class="guaci-text" style="border-left-color:#a63d2f">${rule.refText}</div>`;
     }
 
-    // 体用
+    // 体用（无动爻时梅花不分体用，避免给出失真结论）
     html += `<h4>体用生克（你与事情的相处模式）</h4>`;
+    if (moving.length === 0) {
+      html += `<div class="tip"><b>注</b> 「体」= 你自己，「用」= 你要面对的事。本卦<b>六爻皆静，没有动爻，传统上不分体用</b>，直接按卦辞与整体卦意理解即可。</div>`;
+    } else {
     html += `<div class="tip"><b>注</b> 「体」= 你自己，「用」= 你要面对的事。下面这组五行关系，就是古人用来判断“你和这件事合不合得来”的方法。</div>`;
     const triSym = t => TRIGRAMS[t].lines.split("").map(c => `<span class="line ${c === "1" ? "" : "yin"}"></span>`).join("");
     html += `<div class="tiyong-grid">
@@ -712,6 +725,7 @@
       <div class="tiyong-cell"><div class="ty-name">关系 · ${ty.relation}</div><p class="badge ${ty.verdict.indexOf("凶") >= 0 ? "bad" : (ty.verdict.indexOf("吉") >= 0 ? "good" : "mid")}">${ty.verdict}</p><small>${ty.ti}${ty.tiEl} ${ty.relation} ${ty.yong}${ty.yongEl}</small></div>
     </div>`;
     html += `<p class="change-list" style="text-align:left;font-size:12.5px;color:#5c5649">${ty.relation === "比和" ? "体用五行相同，同心协力之象，谋事顺遂。" : ty.relation === "用生体" ? "外方生助于我，有贵人扶持，谋事可成。" : ty.relation === "体生用" ? "我方耗泄于外，付出多而收效少，宜防损耗。" : ty.relation === "体克用" ? "我方能克制外方，事可成但须费力争取。" : "外方克制于我，谋事多阻，宜守不宜攻。"}</p>`;
+    }
 
     // 六爻装卦
     html += `<h4>六爻装卦（纳甲筮法 · 进阶内容）</h4>`;
@@ -841,8 +855,8 @@
       return { title: "五爻变 · 占之卦不变爻爻辞", desc: `以之卦【${changeHex.name}】唯一不变爻【${y.name}】爻辞断之。`, refText: `${y.name}：${y.text}　（象曰：${y.xiang}）` };
     }
     // n === 6
-    if (isQian) return { title: "六爻全变 · 乾卦用「用九」", desc: "乾坤二卦六爻全变，用二用断之。", refText: `用九：见群龙无首，吉。` };
-    if (isKun) return { title: "六爻全变 · 坤卦用「用六」", desc: "乾坤二卦六爻全变，用二用断之。", refText: `用六：利永贞。` };
+    if (isQian) return { title: "六爻全变 · 乾卦用「用九」", desc: "乾卦六爻全变，用「用九」断之。", refText: `用九：见群龙无首，吉。` };
+    if (isKun) return { title: "六爻全变 · 坤卦用「用六」", desc: "坤卦六爻全变，用「用六」断之。", refText: `用六：利永贞。` };
     return { title: "六爻全变 · 占之卦卦辞", desc: `其余六十二卦六爻全变，以之卦【${changeHex.name}】卦辞断之。`, refText: `之卦卦辞：${changeHex.guaci}` };
   }
 
@@ -897,7 +911,7 @@
       card.innerHTML = `
         <div class="rec-sym">${linesHtml(r.lines, { size: "mini" })}</div>
         <div class="rec-main">
-          <b>${r.hexName}卦</b><span>${r.hexTitle}　${r.moving.length ? "变爻" + r.moving.map(m => m + 1).join(",") : "六爻静"}　${r.changeName ? "→ 之卦" + r.changeName : ""}</span><br>
+          <b>${r.hexName}卦</b><span>${r.hexTitle}　${(r.moving || []).length ? "变爻" + r.moving.map(m => m + 1).join(",") : "六爻静"}　${r.changeName ? "→ 之卦" + r.changeName : ""}</span><br>
           <span style="font-size:12px;color:#8a6d1f">${escapeHtml(r.methodName)}</span>${q ? `<div class="rec-q">问：${escapeHtml(q.length > 26 ? q.slice(0, 26) + "…" : q)}</div>` : ""}
         </div>
         <div class="rec-time">${new Date(r.time).toLocaleString("zh-CN")}</div>
@@ -938,6 +952,8 @@
       valid.forEach(r => {
         if (seen[r.time]) { dup++; return; }
         seen[r.time] = true;
+        if (!r.rid) r.rid = ZhouyiSync.genRid(); // 补 id，确保能参与云同步
+        if (!r.moving) r.moving = [];             // 补默认字段，避免渲染/回放崩溃
         state.records.push(r);
         added++;
       });
@@ -955,7 +971,7 @@
 
   function replayRecord(idx) {
     const r = state.records[idx];
-    renderResult({ lines: r.lines, moving: r.moving, methodName: r.methodName + "（历史记录）", question: r.question || "", save: false });
+    renderResult({ lines: r.lines, moving: r.moving || [], methodName: r.methodName + "（历史记录）", question: r.question || "", save: false });
     switchView("divine");
   }
 
@@ -1119,7 +1135,9 @@
   function gameInit() {
     let best = 0;
     try { best = parseInt(localStorage.getItem(GAME_BEST_KEY), 10) || 0; } catch (e) { best = 0; }
-    state.game = { level: 0, score: 0, streak: 0, lastId: -1, answered: false, used: [], mode: "sym2name", correct: 0, total: 0, best: best };
+    // 清除旧的自动下一题定时器，避免重新开始后被旧定时器额外跳题
+    if (state.game && state.game.timer) clearTimeout(state.game.timer);
+    state.game = { level: 0, score: 0, streak: 0, lastId: -1, answered: false, used: [], mode: "sym2name", correct: 0, total: 0, best: best, timer: null };
     gameNewRound();
   }
 
@@ -1136,6 +1154,7 @@
   function gameSetMode(mode) {
     const g = state.game;
     if (!g || g.mode === mode) return;
+    if (g.timer) clearTimeout(g.timer);
     g.mode = mode;
     $("#gameModeSym2Name").classList.toggle("active", mode === "sym2name");
     $("#gameModeName2Sym").classList.toggle("active", mode === "name2sym");
@@ -1220,7 +1239,7 @@
     gameSaveBest();
     gameUpdateScorebar();
     $all(".game-opt").forEach(b => b.disabled = true);
-    setTimeout(gameNewRound, 1500);
+    g.timer = setTimeout(gameNewRound, 1500);
   }
 
   /** 提示：扣 5 分显示上下卦 */
@@ -1284,9 +1303,21 @@
       $("#loginEmail").value = "";
       $("#loginPwd").value = "";
       renderAuthUI();
-      return syncAll();
-    }).then(function () {
       btn.disabled = false;
+      // 同步与登录解耦：同步失败用顶部指示器提示，不影响登录成功状态
+      const indicator = $("#syncStatusIndicator");
+      indicator.style.display = "inline-block";
+      indicator.textContent = "正在同步记录…";
+      indicator.className = "sync-status-indicator syncing";
+      syncAll().then(function (res) {
+        indicator.textContent = (res.added > 0 || res.pushed > 0) ? `✓ 同步完成 (+${res.added}/↑${res.pushed})` : "✓ 已是最新";
+        indicator.className = "sync-status-indicator success";
+        setTimeout(() => { indicator.style.display = "none"; }, 3000);
+      }).catch(function (err) {
+        indicator.textContent = "✗ 同步失败：" + ((err && err.message) || "稍后再试");
+        indicator.className = "sync-status-indicator error";
+        setTimeout(() => { indicator.style.display = "none"; }, 4000);
+      });
     }).catch(function (err) {
       btn.disabled = false;
       tip.textContent = (err && err.message) || "操作失败，请稍后再试。";
@@ -1395,6 +1426,8 @@
       setTimeout(clearAutofill, 3000);
     });
     hexSearchInput.addEventListener("input", () => {
+      // 搜索时同步高亮"全部"标签，避免视觉状态不一致
+      $all(".filter-tabs .chip").forEach(x => x.classList.toggle("active", x.dataset.filter === "all"));
       setOverviewMode("all");
       renderOverviewGrid();
     });

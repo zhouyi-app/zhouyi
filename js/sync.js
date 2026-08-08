@@ -82,6 +82,13 @@
         }
         return data;
       });
+    }).catch(function (err) {
+      // 网络层错误（断网/超时）转成友好提示
+      if (err && err.status) throw err;
+      var e = new Error("网络异常，请检查网络后重试。");
+      e.status = 0;
+      e.original = err;
+      throw e;
     });
   }
 
@@ -119,13 +126,18 @@
               notify();
               return cur;
             }
-            throw new Error("用户不存在");
+            var nf = new Error("用户不存在");
+            nf.status = 404;
+            throw nf;
           })
-          .catch(function () {
-            cur = null;
-            clearSession();
+          .catch(function (err) {
+            // 仅当确认用户不存在（4xx）时清除本地会话；网络/服务器错误保留会话（离线降级）
+            if (err && err.status && err.status >= 400 && err.status < 500) {
+              cur = null;
+              clearSession();
+            }
             notify();
-            return null;
+            return cur;
           });
       }
       notify();
@@ -159,20 +171,16 @@
     /** 登录 */
     login: function (email, password) {
       var encoded = encodePassword(password);
-      return req("GET", "/rest/v1/app_users?select=*&email=eq." + encodeURIComponent(email.toLowerCase()) + "&password_hash=eq." + encodeURIComponent(encoded))
+      // 单次查询邮箱，客户端比对密码哈希（不再暴露"邮箱是否已注册"细节，也避免二次请求失败误判）
+      return req("GET", "/rest/v1/app_users?select=id,email,password_hash&email=eq." + encodeURIComponent(email.toLowerCase()))
         .then(function (users) {
           if (!Array.isArray(users) || users.length === 0) {
-            // 尝试查询是否存在该邮箱
-            return req("GET", "/rest/v1/app_users?select=id,email&email=eq." + encodeURIComponent(email.toLowerCase()))
-              .then(function (exists) {
-                if (Array.isArray(exists) && exists.length > 0) {
-                  throw new Error("密码错误，请重试。");
-                } else {
-                  throw new Error("该邮箱尚未注册，请先注册账号。");
-                }
-              });
+            throw new Error("邮箱或密码不正确。");
           }
           var row = users[0];
+          if (row.password_hash !== encoded) {
+            throw new Error("邮箱或密码不正确。");
+          }
           cur = { userId: row.id, email: row.email, token: encoded };
           saveSession();
           notify();
@@ -212,17 +220,25 @@
       });
     },
 
-    /** 拉取云端全部记录（按 user_id 过滤） */
+    /** 拉取云端全部记录（按 user_id 过滤，分页拉取避免超千条截断） */
     pullAll: function () {
       if (!api.isLoggedIn()) return Promise.resolve([]);
-      return req("GET", "/rest/v1/records?select=*&user_id=eq." + encodeURIComponent(cur.userId) + "&order=time.desc&limit=1000")
-        .then(function (d) { return Array.isArray(d) ? d : []; });
+      var all = [];
+      var step = function (from) {
+        return req("GET", "/rest/v1/records?select=*&user_id=eq." + encodeURIComponent(cur.userId) + "&order=time.desc&limit=1000&offset=" + from)
+          .then(function (d) {
+            var list = Array.isArray(d) ? d : [];
+            all = all.concat(list);
+            return list.length === 1000 ? step(from + 1000) : all;
+          });
+      };
+      return step(0);
     },
 
-    /** 按 cloudId 删除云端记录 */
+    /** 按 cloudId 删除云端记录（附带 user_id 校验，防止误删他人数据） */
     deleteCloud: function (cloudId) {
       if (!api.isLoggedIn() || !cloudId) return Promise.resolve();
-      return req("DELETE", "/rest/v1/records?id=eq." + encodeURIComponent(cloudId))
+      return req("DELETE", "/rest/v1/records?id=eq." + encodeURIComponent(cloudId) + "&user_id=eq." + encodeURIComponent(cur.userId))
         .then(function () {});
     },
 
@@ -243,12 +259,16 @@
         var local = (getLocal() || []).slice();
         var localByRid = {};
         local.forEach(function (r) { if (r.rid) localByRid[r.rid] = r; });
+        // 无 rid 的云端脏记录按 time+hexName 去重，避免每次同步重复新增
+        var localByTimeName = {};
+        local.forEach(function (r) { if (!r.rid) localByTimeName[r.time + "|" + r.hexName] = true; });
 
-        var added = 0, removed = 0, pushes = [], deletePushes = [];
+        var added = 0, removed = 0, pushes = [], deletePushes = [], removedRids = [];
 
         cloud.forEach(function (c) {
           if (c.rid && tombs.indexOf(c.rid) >= 0) {
             deletePushes.push(api.deleteCloud(c.id).catch(function () {}));
+            removedRids.push(c.rid);
             removed++;
           }
         });
@@ -273,10 +293,18 @@
           };
           if (c.rid && localByRid[c.rid]) {
             localByRid[c.rid].cloudId = c.id;
-          } else if (!c.rid || !localByRid[c.rid]) {
+          } else if (c.rid) {
             local.push(rc);
-            if (c.rid) localByRid[c.rid] = rc;
+            localByRid[c.rid] = rc;
             added++;
+          } else {
+            // 云端脏记录（无 rid）：去重后并入本地
+            var key = (c.time || "") + "|" + (c.hexName || "");
+            if (!localByTimeName[key]) {
+              localByTimeName[key] = true;
+              local.push(rc);
+              added++;
+            }
           }
         });
 
@@ -291,6 +319,11 @@
         saveLocal(local);
         return Promise.all(pushes.concat(deletePushes)).then(function () {
           saveLocal(getLocal());
+          // 云端删除已提交成功后，清理对应墓碑，避免墓碑列表无限增长
+          if (removedRids.length) {
+            var rest = tombs.filter(function (t) { return removedRids.indexOf(t) < 0; });
+            setDeleted(rest);
+          }
           return { added: added, pushed: pushes.length, removed: removed };
         });
       });
