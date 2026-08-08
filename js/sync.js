@@ -1,45 +1,52 @@
 /* =====================================================
  * 《周易》账号系统 + 跨设备云同步
- * 基于 Supabase（免费）的 REST API 实现，无需 SDK。
+ * 基于 Supabase（免费）的 REST API 实现，自建用户表，无需邮件确认。
  * 未登录时一切照旧（仅保存在本机）；登录后起卦记录自动同步到云端，
  * 换手机 / 电脑登录同一账号即可恢复自己的记录。
- *
- * 使用前需在 Supabase 控制台执行一次建表 SQL（见对话指引），
- * 并把下方 CFG 的三个占位符替换为项目凭证。
  * ===================================================== */
 (function (w) {
   "use strict";
 
-  /* ---------------- 配置区（注册 Supabase 后填入） ----------------
-   * 注册地址：https://supabase.com （免费，邮箱即可）
-   * 创建项目后，在「Project Settings → API」里找到：
-   *   Project URL        -> CFG.url
-   *   anon public key    -> CFG.anonKey
-   * -------------------------------------------------------------- */
   var CFG = {
     url: "https://ywfvtexqannyfyklglck.supabase.co",
     anonKey: "sb_publishable_oG6dsS2EP2WhE6-jPGODTg_R_HXh7no"
   };
 
-  var SESSION_KEY = "zhouyi_session_v1";   // 登录会话缓存
-  var DEL_KEY = "zhouyi_deleted_rids_v1";  // 本地删除墓碑（用于云同步去重）
+  var SESSION_KEY = "zhouyi_session_v1";
+  var DEL_KEY = "zhouyi_deleted_rids_v1";
 
-  var cur = null;   // 当前用户 {id, email, token}
-  var hook = null;  // 登录状态变化回调
+  var cur = null;
+  var hook = null;
 
   function cfgReady() {
-    return CFG.url && CFG.anonKey &&
-      CFG.url.indexOf("REPLACE") < 0 && CFG.anonKey.indexOf("REPLACE") < 0;
+    return CFG.url && CFG.anonKey;
   }
 
-  /** 通用请求。token 存在时携带用户授权；extraHeaders 可补充（如 Prefer） */
-  function req(method, path, body, token, extraHeaders) {
+  /** SHA-256 加密密码 */
+  async function hashPassword(password) {
+    var encoder = new TextEncoder();
+    var data = encoder.encode(password);
+    var hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    var hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+  }
+
+  /** 生成 UUID */
+  function genUUID() {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16 | 0;
+      var v = c === "x" ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  function req(method, path, body, extraHeaders) {
     if (!cfgReady()) return Promise.reject(new Error("云服务尚未配置"));
     var headers = {
       "apikey": CFG.anonKey,
       "Content-Type": "application/json"
     };
-    if (token) headers["Authorization"] = "Bearer " + token;
+    if (cur && cur.token) headers["Authorization"] = "Bearer " + cur.token;
     if (extraHeaders) {
       Object.keys(extraHeaders).forEach(function (k) { headers[k] = extraHeaders[k]; });
     }
@@ -48,7 +55,9 @@
       headers: headers,
       body: body ? JSON.stringify(body) : undefined
     }).then(function (res) {
-      return res.json().then(function (data) {
+      return res.text().then(function (text) {
+        var data;
+        try { data = JSON.parse(text); } catch (e) { data = text; }
         if (!res.ok) {
           var msg;
           if (data && data.error_description) msg = data.error_description;
@@ -80,76 +89,94 @@
   function notify() {
     if (hook) hook(cur);
   }
-  function setCur(u, accessToken) {
-    cur = { id: u.id, email: u.email || "", token: accessToken || u.access_token };
-    saveSession();
-    notify();
-    return cur;
-  }
 
-  /* ---------------- 对外 API ---------------- */
   var api = {
     configured: cfgReady,
-    isLoggedIn: function () { return !!cur && !!cur.token; },
+    isLoggedIn: function () { return !!cur && !!cur.userId; },
     getUser: function () { return cur; },
 
-    /** 初始化：恢复本地会话，异步向服务器验证有效性 */
+    /** 初始化：恢复本地会话，验证有效性 */
     init: function (cb) {
       hook = cb;
       try { cur = JSON.parse(localStorage.getItem(SESSION_KEY)) || null; } catch (e) { cur = null; }
       if (cur && cur.token) {
-        return req("GET", "/auth/v1/user", null, cur.token).then(function (u) {
-          cur.id = u.id;
-          cur.email = u.email || cur.email;
-          saveSession();
-          notify();
-          return cur;
-        }).catch(function () {
-          // 会话已失效则自动退出
-          cur = null;
-          clearSession();
-          notify();
-          return null;
-        });
+        // 验证用户是否仍存在
+        return req("GET", "/rest/v1/app_users?select=id,email&id=eq." + encodeURIComponent(cur.userId))
+          .then(function (users) {
+            if (Array.isArray(users) && users.length > 0) {
+              cur.email = users[0].email || cur.email;
+              saveSession();
+              notify();
+              return cur;
+            }
+            throw new Error("用户不存在");
+          })
+          .catch(function () {
+            cur = null;
+            clearSession();
+            notify();
+            return null;
+          });
       }
       notify();
       return Promise.resolve(cur);
     },
 
-    /** 注册（邮箱 + 密码），成功后自动登录 */
+    /** 注册（邮箱 + 密码），自建用户表，秒完成 */
     register: function (email, password) {
-      return req("POST", "/auth/v1/signup", { email: email, password: password })
-        .then(function (d) {
-          if (!d || !d.access_token) {
-            var e = new Error("注册成功，但需要到邮箱点确认链接后才能登录。");
-            e.needsConfirm = true;
-            throw e;
-          }
-          return setCur(d.user || d, d.access_token);
-        });
+      return hashPassword(password).then(function (hash) {
+        var userId = genUUID();
+        return req("POST", "/rest/v1/app_users", {
+          id: userId,
+          email: email.toLowerCase(),
+          password_hash: hash
+        }, { "Prefer": "return=representation" })
+          .then(function (data) {
+            var row = Array.isArray(data) ? data[0] : data;
+            cur = { userId: row.id, email: row.email, token: hash }; // 用密码哈希作会话 token（简单方案）
+            saveSession();
+            notify();
+            return cur;
+          })
+          .catch(function (err) {
+            if (err && err.message && err.message.indexOf("duplicate") >= 0) {
+              throw new Error("该邮箱已注册，请直接登录。");
+            }
+            throw err;
+          });
+      });
     },
 
     /** 登录 */
     login: function (email, password) {
-      return req("POST", "/auth/v1/token?grant_type=password", { email: email, password: password })
-        .then(function (d) {
-          var u = d.user || {};
-          return setCur({ id: u.id, email: u.email || email, access_token: d.access_token });
-        });
+      return hashPassword(password).then(function (hash) {
+        return req("GET", "/rest/v1/app_users?select=*&email=eq." + encodeURIComponent(email.toLowerCase()) + "&password_hash=eq." + encodeURIComponent(hash))
+          .then(function (users) {
+            if (!Array.isArray(users) || users.length === 0) {
+              throw new Error("邮箱或密码错误。");
+            }
+            var row = users[0];
+            cur = { userId: row.id, email: row.email, token: hash };
+            saveSession();
+            notify();
+            return cur;
+          });
+      });
     },
 
-    /** 退出登录（本地与云端数据都保留） */
+    /** 退出登录 */
     logout: function () {
       cur = null;
       clearSession();
       notify();
     },
 
-    /** 把一条新记录推到云端，成功后在本地补上 cloudId */
+    /** 把一条新记录推到云端 */
     pushRecord: function (record) {
       if (!api.isLoggedIn()) return Promise.resolve(null);
       return req("POST", "/rest/v1/records", {
         rid: record.rid,
+        user_id: cur.userId,
         time: record.time,
         methodName: record.methodName,
         extraDesc: record.extraDesc || "",
@@ -162,28 +189,28 @@
         changeId: record.changeId || null,
         changeName: record.changeName || null,
         dayGZ: record.dayGZ || ""
-      }, cur.token, { "Prefer": "return=representation" }).then(function (d) {
+      }, { "Prefer": "return=representation" }).then(function (d) {
         var row = (Array.isArray(d) && d[0]) || d;
         if (row) record.cloudId = row.id;
         return row || null;
       });
     },
 
-    /** 拉取云端全部记录（RLS 保证只返回本人数据） */
+    /** 拉取云端全部记录（按 user_id 过滤） */
     pullAll: function () {
       if (!api.isLoggedIn()) return Promise.resolve([]);
-      return req("GET", "/rest/v1/records?select=*&order=time.desc&limit=1000", null, cur.token)
+      return req("GET", "/rest/v1/records?select=*&user_id=eq." + encodeURIComponent(cur.userId) + "&order=time.desc&limit=1000")
         .then(function (d) { return Array.isArray(d) ? d : []; });
     },
 
     /** 按 cloudId 删除云端记录 */
     deleteCloud: function (cloudId) {
       if (!api.isLoggedIn() || !cloudId) return Promise.resolve();
-      return req("DELETE", "/rest/v1/records?id=eq." + encodeURIComponent(cloudId), null, cur.token)
+      return req("DELETE", "/rest/v1/records?id=eq." + encodeURIComponent(cloudId))
         .then(function () {});
     },
 
-    /** 记录本地已删除的 rid（墓碑），供合并时排除 */
+    /** 记录本地已删除的 rid（墓碑） */
     markDeleted: function (rid) {
       if (!rid) return;
       var list = getDeleted();
@@ -192,10 +219,7 @@
     },
     getDeleted: getDeleted,
 
-    /**
-     * 全量同步：拉取云端 → 与本地合并（按 rid 去重）→ 保存 → 补传本地新增。
-     * 调用方传入读取 / 保存本地记录的函数。
-     */
+    /** 全量同步 */
     syncRecords: function (getLocal, saveLocal) {
       if (!api.isLoggedIn()) return Promise.resolve({ added: 0, pushed: 0, removed: 0 });
       var tombs = getDeleted();
@@ -206,7 +230,6 @@
 
         var added = 0, removed = 0, pushes = [], deletePushes = [];
 
-        // 1) 墓碑过滤：把云端已删的记录从云端删除
         cloud.forEach(function (c) {
           if (c.rid && tombs.indexOf(c.rid) >= 0) {
             deletePushes.push(api.deleteCloud(c.id).catch(function () {}));
@@ -214,9 +237,8 @@
           }
         });
 
-        // 2) 合并云端记录（本地没有的补进本地；本地已删的剔除）
         cloud.forEach(function (c) {
-          if (c.rid && tombs.indexOf(c.rid) >= 0) return; // 已删
+          if (c.rid && tombs.indexOf(c.rid) >= 0) return;
           var rc = {
             rid: c.rid,
             cloudId: c.id,
@@ -234,7 +256,7 @@
             dayGZ: c.dayGZ || ""
           };
           if (c.rid && localByRid[c.rid]) {
-            localByRid[c.rid].cloudId = c.id; // 补上云端 id
+            localByRid[c.rid].cloudId = c.id;
           } else if (!c.rid || !localByRid[c.rid]) {
             local.push(rc);
             if (c.rid) localByRid[c.rid] = rc;
@@ -242,7 +264,6 @@
           }
         });
 
-        // 3) 本地有而云端没有的 → 补传云端
         local.forEach(function (r) {
           if (r.rid && !r.cloudId) {
             pushes.push(api.pushRecord(r));
@@ -253,14 +274,13 @@
 
         saveLocal(local);
         return Promise.all(pushes.concat(deletePushes)).then(function () {
-          saveLocal(getLocal()); // pushRecord 会写入 cloudId，再存一次
+          saveLocal(getLocal());
           return { added: added, pushed: pushes.length, removed: removed };
         });
       });
     }
   };
 
-  /** 生成唯一记录 id（本地用） */
   api.genRid = function () {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   };
