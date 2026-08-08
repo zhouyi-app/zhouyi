@@ -113,6 +113,14 @@ body {
 }
 .btn-login:hover { opacity: .9; }
 .btn-login.logged { background: linear-gradient(135deg, var(--verdigris), var(--verdigris-soft)); }
+.sync-status-indicator {
+  font-size: 11px; color: var(--ink-soft); padding: 5px 10px;
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 12px; transition: all 0.3s ease;
+}
+.sync-status-indicator.syncing { color: var(--gold); border-color: var(--gold); }
+.sync-status-indicator.success { color: var(--verdigris); border-color: var(--verdigris); }
+.sync-status-indicator.error { color: var(--cinnabar); border-color: var(--cinnabar); }
 
 /* 返回顶部按钮 */
 .btn-top {

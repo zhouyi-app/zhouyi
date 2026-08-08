@@ -596,9 +596,22 @@
       state.records.unshift(record);
       saveRecords();
       renderRecords();
-      // 已登录则同步到云端（失败不打扰，下次登录会补传）
+      // 已登录则同步到云端
       if (ZhouyiSync.isLoggedIn()) {
-        ZhouyiSync.pushRecord(record).catch(function () {});
+        const indicator = $("#syncStatusIndicator");
+        indicator.style.display = "inline-block";
+        indicator.textContent = "同步中…";
+        indicator.className = "sync-status-indicator syncing";
+        ZhouyiSync.pushRecord(record).then(function() {
+          indicator.textContent = "✓ 已同步";
+          indicator.className = "sync-status-indicator success";
+          setTimeout(() => { indicator.style.display = "none"; }, 2000);
+        }).catch(function(err) {
+          console.error('云同步失败:', err);
+          indicator.textContent = "✗ 同步失败";
+          indicator.className = "sync-status-indicator error";
+          setTimeout(() => { indicator.style.display = "none"; }, 3000);
+        });
       }
     }
 
@@ -1226,16 +1239,24 @@
 
   function renderAuthUI() {
     const btn = $("#btnUser");
+    const indicator = $("#syncStatusIndicator");
     if (ZhouyiSync.isLoggedIn()) {
       const u = ZhouyiSync.getUser();
       const name = ((u.email || "我的").split("@")[0]) || "我的";
       btn.textContent = name.length > 10 ? name.slice(0, 10) + "…" : name;
       btn.classList.add("logged");
+      indicator.style.display = "inline-block";
+      indicator.textContent = "云同步已开启";
+      indicator.className = "sync-status-indicator success";
+      setTimeout(() => {
+        if (indicator.textContent === "云同步已开启") indicator.style.display = "none";
+      }, 3000);
       const mail = $("#userMail");
       if (mail) mail.textContent = u.email || "";
     } else {
       btn.textContent = "登录";
       btn.classList.remove("logged");
+      indicator.style.display = "none";
     }
   }
 
@@ -1323,7 +1344,26 @@
     });
     // 恢复上次会话；若已登录则拉取云端记录
     ZhouyiSync.init(function () { renderAuthUI(); }).then(function (user) {
-      if (user) syncAll().catch(function () {});
+      if (user) {
+        const indicator = $("#syncStatusIndicator");
+        indicator.style.display = "inline-block";
+        indicator.textContent = "加载云端记录…";
+        indicator.className = "sync-status-indicator syncing";
+        syncAll().then(function(res) {
+          if (res.added > 0 || res.pushed > 0) {
+            indicator.textContent = `✓ 同步完成 (+${res.added}/↑${res.pushed})`;
+          } else {
+            indicator.textContent = "✓ 已是最新";
+          }
+          indicator.className = "sync-status-indicator success";
+          setTimeout(() => { indicator.style.display = "none"; }, 3000);
+        }).catch(function(err) {
+          console.error('启动同步失败:', err);
+          indicator.textContent = "✗ 同步失败";
+          indicator.className = "sync-status-indicator error";
+          setTimeout(() => { indicator.style.display = "none"; }, 3000);
+        });
+      }
     });
   }
 

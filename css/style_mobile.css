@@ -86,6 +86,14 @@ body {
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .m-user-btn.logged { background: var(--verdigris); }
+.m-sync-status {
+  font-size: 11px; color: var(--ink-soft); padding: 4px 8px;
+  background: var(--paper-2); border-radius: 10px;
+  transition: all 0.3s ease;
+}
+.m-sync-status.syncing { color: var(--gold); }
+.m-sync-status.success { color: var(--verdigris); }
+.m-sync-status.error { color: var(--cinnabar); }
 
 /* ---------- 主体 ---------- */
 main { padding: 16px 14px 40px; }
