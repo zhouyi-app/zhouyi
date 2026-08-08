@@ -78,6 +78,14 @@ body {
   border-radius: 15px; padding: 5px 13px; font-family: inherit; font-size: 12.5px;
   color: var(--ink-soft); cursor: pointer;
 }
+.m-head-right { display: flex; align-items: center; gap: 8px; }
+.m-user-btn {
+  flex-shrink: 0; background: linear-gradient(135deg, var(--cinnabar), var(--cinnabar-deep));
+  border: none; border-radius: 15px; padding: 6px 14px; font-family: inherit;
+  font-size: 12.5px; color: #f6ead9; cursor: pointer; max-width: 90px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.m-user-btn.logged { background: var(--verdigris); }
 
 /* ---------- 主体 ---------- */
 main { padding: 16px 14px 40px; }
@@ -373,6 +381,51 @@ main { padding: 16px 14px 40px; }
   animation: mSlideIn .25s ease;
 }
 @keyframes mSlideIn { from { transform: translateX(100%); } to { transform: none; } }
+
+/* ---------- 登录弹窗 ---------- */
+.m-modal {
+  position: fixed; inset: 0; z-index: 500;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.m-modal-mask {
+  position: absolute; inset: 0; background: rgba(30,22,10,.45);
+  animation: mFadeIn .2s ease;
+}
+.m-modal-box {
+  position: relative; width: 100%; max-width: 420px;
+  background: var(--card); border-radius: 16px 16px 0 0;
+  padding: 18px 20px calc(20px + env(safe-area-inset-bottom));
+  box-shadow: 0 -6px 30px rgba(0,0,0,.18);
+  animation: mFadeUp .25s ease;
+}
+.m-modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 16px; color: var(--ink); padding-bottom: 10px;
+  border-bottom: 1px solid var(--line); margin-bottom: 14px;
+}
+.m-modal-x {
+  width: 30px; height: 30px; border: none; background: transparent;
+  color: var(--ink-soft); font-size: 20px; line-height: 1; cursor: pointer; font-family: inherit;
+}
+.m-login-desc { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 12px; line-height: 1.6; }
+.m-modal-body input[type="email"],
+.m-modal-body input[type="password"] {
+  width: 100%; padding: 12px 14px; margin-bottom: 10px;
+  border: 1px solid var(--line); border-radius: 10px;
+  background: var(--paper); color: var(--ink); font-family: inherit; font-size: 14px;
+}
+.m-modal-body input:focus { outline: none; border-color: var(--gold); }
+.m-modal-body .m-btn-primary,
+.m-modal-body .m-btn-ghost { width: 100%; margin-top: 8px; padding: 13px; font-size: 15px; border-radius: 10px; }
+.m-login-tip { font-size: 12px; color: var(--cinnabar); min-height: 16px; margin: 2px 0 4px; }
+.m-user-avatar {
+  width: 52px; height: 52px; border-radius: 50%; margin: 4px auto 10px;
+  background: linear-gradient(135deg, var(--verdigris), var(--verdigris-soft));
+  color: #f6ead9; font-size: 24px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.m-user-mail { text-align: center; font-size: 15px; color: var(--ink); font-weight: 600; word-break: break-all; }
+.m-user-tip { text-align: center; font-size: 12px; color: var(--ink-soft); margin: 8px 0 4px; }
 .m-detail-head {
   height: var(--head-h); flex-shrink: 0;
   display: flex; align-items: center; justify-content: space-between;

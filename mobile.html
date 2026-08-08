@@ -19,7 +19,10 @@
       <p>六十四卦 · 占筮 · 学习宝典</p>
     </div>
   </div>
-  <button class="m-theme" id="mTheme">夜间</button>
+  <div class="m-head-right">
+    <button class="m-user-btn" id="mUserBtn">登录</button>
+    <button class="m-theme" id="mTheme">夜间</button>
+  </div>
 </header>
 
 <main id="app">
@@ -223,7 +226,7 @@
   <section class="m-view" id="view-records">
     <div class="m-view-head">
       <h2>起卦记录</h2>
-      <p>记录保存在本机浏览器，与电脑版互通。点击记录可回看解卦。</p>
+      <p>记录保存在本机，与电脑版互通。<b>登录账号后自动云同步，换设备不丢失。</b>点击记录可回看解卦。</p>
       <div class="m-rec-actions">
         <button class="m-btn-ghost btn-sm" id="mRecExport">导出</button>
         <button class="m-btn-ghost btn-sm" id="mRecImport">导入</button>
@@ -255,11 +258,43 @@
   <div class="m-detail-body" id="mDetailBody"></div>
 </div>
 
+<!-- 登录弹窗 -->
+<div class="m-modal hidden" id="mLoginModal">
+  <div class="m-modal-mask" data-close="login"></div>
+  <div class="m-modal-box">
+    <div class="m-modal-head"><b id="mLoginTitle">登录</b><button class="m-modal-x" id="mLoginClose" data-close="login">×</button></div>
+    <div class="m-modal-body">
+      <p class="m-login-desc" id="mLoginDesc">登录后，起卦记录会自动保存到云端，换手机也能找回来。</p>
+      <input type="email" id="mLoginEmail" placeholder="邮箱（用于登录）" autocomplete="email">
+      <input type="password" id="mLoginPwd" placeholder="密码（至少 6 位）" autocomplete="current-password">
+      <div class="m-login-tip" id="mLoginTip"></div>
+      <button class="m-btn-primary" id="mLoginSubmit">登 录</button>
+      <button class="m-btn-ghost" id="mLoginSwitch">没有账号？注册一个</button>
+    </div>
+  </div>
+</div>
+
+<!-- 已登录账号面板 -->
+<div class="m-modal hidden" id="mUserModal">
+  <div class="m-modal-mask" data-close="user"></div>
+  <div class="m-modal-box">
+    <div class="m-modal-head"><b>我的账号</b><button class="m-modal-x" id="mUserClose" data-close="user">×</button></div>
+    <div class="m-modal-body">
+      <div class="m-user-avatar">易</div>
+      <div class="m-user-mail" id="mUserMail"></div>
+      <div class="m-user-tip" id="mUserSyncTip">已开启云同步，记录会自动保存。</div>
+      <button class="m-btn-primary" id="mBtnSyncNow">立即同步</button>
+      <button class="m-btn-ghost" id="mLogoutBtn">退出登录</button>
+    </div>
+  </div>
+</div>
+
 <script src="js/data_base.js?v=20260808d"></script>
 <script src="js/data_hex1.js?v=20260808d"></script>
 <script src="js/data_hex2.js?v=20260808d"></script>
 <script src="js/data_hex3.js?v=20260808d"></script>
 <script src="js/data_hex4.js?v=20260808d"></script>
-<script src="js/app_mobile.js?v=20260808d"></script>
+<script src="js/sync.js?v=20260808f"></script>
+<script src="js/app_mobile.js?v=20260808f"></script>
 </body>
 </html>

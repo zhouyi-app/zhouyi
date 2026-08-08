@@ -29,7 +29,10 @@
       <button class="nav-btn" data-view="study">学习宝典</button>
       <button class="nav-btn" data-view="basics">基础入门</button>
     </nav>
-    <button class="theme-toggle" id="btnTheme" title="切换日间 / 夜间模式">夜间模式</button>
+    <div class="header-tools">
+      <button class="btn-login" id="btnUser">登录</button>
+      <button class="theme-toggle" id="btnTheme" title="切换日间 / 夜间模式">夜间模式</button>
+    </div>
   </div>
 </header>
 
@@ -224,7 +227,7 @@
   <section class="view" id="view-records">
     <div class="view-head">
       <h2>起卦记录</h2>
-      <p class="sub">历次占筮存于本机浏览器，点击记录可重新查看解卦详情。备份请用「导出记录」，换设备可用「导入记录」恢复。</p>
+      <p class="sub">历次占筮存于本机浏览器，点击记录可重新查看解卦详情。<b>登录账号后自动云同步，换设备不丢失。</b>备份请用「导出记录」，换设备可用「导入记录」恢复。</p>
       <div class="head-actions">
         <button class="btn-ghost" id="btnImportRecords">导入记录</button>
         <button class="btn-ghost" id="btnExportRecords">导出记录</button>
@@ -521,6 +524,35 @@
   </div>
 </div>
 
+<!-- ============ 登录弹窗 ============ -->
+<div class="modal-mask hidden" id="loginModal">
+  <div class="modal">
+    <button class="modal-close" id="loginModalClose" data-close="login">×</button>
+    <h3 id="loginTitle">登录</h3>
+    <p class="login-desc" id="loginDesc">登录后，起卦记录会自动保存到云端，换电脑 / 手机都能找回来。</p>
+    <input type="email" id="loginEmail" placeholder="邮箱（用于登录）" autocomplete="email">
+    <input type="password" id="loginPwd" placeholder="密码（至少 6 位）" autocomplete="current-password">
+    <div class="login-tip" id="loginTip"></div>
+    <button class="btn-primary" id="loginSubmit">登 录</button>
+    <button class="btn-ghost login-switch" id="loginSwitch">没有账号？注册一个</button>
+  </div>
+</div>
+
+<!-- ============ 已登录账号面板 ============ -->
+<div class="modal-mask hidden" id="userModal">
+  <div class="modal">
+    <button class="modal-close" id="userModalClose" data-close="user">×</button>
+    <h3>我的账号</h3>
+    <div class="user-card">
+      <div class="user-avatar">易</div>
+      <div class="user-mail" id="userMail"></div>
+      <p class="user-tip" id="userSyncTip">已开启云同步，记录会自动保存。</p>
+    </div>
+    <button class="btn-primary" id="btnSyncNow">立即同步</button>
+    <button class="btn-ghost login-switch" id="btnLogout">退出登录</button>
+  </div>
+</div>
+
 <footer class="site-footer">
   <p>《周易》· 群经之首，大道之源 —— 本程序仅供传统文化研究与学习交流之用</p>
 </footer>
@@ -530,7 +562,8 @@
 <script src="js/data_hex2.js?v=20260808c"></script>
 <script src="js/data_hex3.js?v=20260808c"></script>
 <script src="js/data_hex4.js?v=20260808c"></script>
-<script src="js/app.js?v=20260808c"></script>
+<script src="js/sync.js?v=20260808f"></script>
+<script src="js/app.js?v=20260808f"></script>
 </body>
 </html>
 

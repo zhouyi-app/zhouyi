@@ -209,6 +209,10 @@
   function loadRecords() {
     try { state.records = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
     catch (e) { state.records = []; }
+    // 旧记录补上唯一 id，便于云同步去重
+    let patched = false;
+    state.records.forEach(r => { if (!r.rid) { r.rid = ZhouyiSync.genRid(); patched = true; } });
+    if (patched) saveRecords();
   }
   function saveRecords() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.records));
@@ -573,6 +577,7 @@
     // 朱熹七则选辞
     const rule = selectRule(hex, changed.hex, moving, lines);
     const record = {
+      rid: ZhouyiSync.genRid(),
       time: now.toISOString(),
       methodName: cast.methodName,
       extraDesc: cast.extraDesc || "",
@@ -591,6 +596,10 @@
       state.records.unshift(record);
       saveRecords();
       renderRecords();
+      // 已登录则同步到云端（失败不打扰，下次登录会补传）
+      if (ZhouyiSync.isLoggedIn()) {
+        ZhouyiSync.pushRecord(record).catch(function () {});
+      }
     }
 
     let html = "";
@@ -885,9 +894,15 @@
       del.addEventListener("click", e => {
         e.stopPropagation();
         if (confirm("确定删除这条起卦记录吗？")) {
+          const rec = state.records[idx];
           state.records.splice(idx, 1);
           saveRecords();
           renderRecords();
+          // 云同步：本地记墓碑，已登录则同时删云端
+          ZhouyiSync.markDeleted(rec.rid);
+          if (ZhouyiSync.isLoggedIn() && rec.cloudId) {
+            ZhouyiSync.deleteCloud(rec.cloudId).catch(function () {});
+          }
         }
       });
       box.appendChild(card);
@@ -1206,10 +1221,117 @@
     $("#gameHint").innerHTML = `提示：此卦<b>上${h.upper}、下${h.lower}</b>（上${TRIGRAMS[h.upper].nature} · 下${TRIGRAMS[h.lower].nature}）`;
   }
 
+  /* ================= 账号登录 ================= */
+  const auth = { mode: "login" };
+
+  function renderAuthUI() {
+    const btn = $("#btnUser");
+    if (ZhouyiSync.isLoggedIn()) {
+      const u = ZhouyiSync.getUser();
+      const name = ((u.email || "我的").split("@")[0]) || "我的";
+      btn.textContent = name.length > 10 ? name.slice(0, 10) + "…" : name;
+      btn.classList.add("logged");
+      const mail = $("#userMail");
+      if (mail) mail.textContent = u.email || "";
+    } else {
+      btn.textContent = "登录";
+      btn.classList.remove("logged");
+    }
+  }
+
+  /** 登录后全量同步：拉云端 → 合并 → 补传 */
+  function syncAll() {
+    if (!ZhouyiSync.isLoggedIn()) return Promise.resolve({ added: 0, pushed: 0, removed: 0 });
+    return ZhouyiSync.syncRecords(
+      function () { return state.records; },
+      function (recs) { state.records = recs; saveRecords(); renderRecords(); }
+    );
+  }
+
+  function submitAuth() {
+    const email = $("#loginEmail").value.trim();
+    const pwd = $("#loginPwd").value;
+    const tip = $("#loginTip");
+    tip.textContent = "";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { tip.textContent = "请输入正确的邮箱地址。"; return; }
+    if (pwd.length < 6) { tip.textContent = "密码至少 6 位。"; return; }
+    const btn = $("#loginSubmit");
+    btn.disabled = true;
+    const action = auth.mode === "register" ? ZhouyiSync.register(email, pwd) : ZhouyiSync.login(email, pwd);
+    action.then(function () {
+      $("#loginModal").classList.add("hidden");
+      $("#loginEmail").value = "";
+      $("#loginPwd").value = "";
+      renderAuthUI();
+      return syncAll();
+    }).then(function () {
+      btn.disabled = false;
+    }).catch(function (err) {
+      btn.disabled = false;
+      tip.textContent = (err && err.message) || "操作失败，请稍后再试。";
+    });
+  }
+
+  function openLogin(mode) {
+    auth.mode = mode === "register" ? "register" : "login";
+    $("#loginTitle").textContent = auth.mode === "register" ? "注册" : "登录";
+    $("#loginDesc").textContent = auth.mode === "register"
+      ? "用邮箱注册一个账号，记录将自动备份到云端，换电脑 / 手机不丢失。"
+      : "登录后，起卦记录会自动保存到云端，换电脑 / 手机都能找回来。";
+    $("#loginSubmit").textContent = auth.mode === "register" ? "注 册" : "登 录";
+    $("#loginSwitch").textContent = auth.mode === "register" ? "已有账号？去登录" : "没有账号？注册一个";
+    $("#loginTip").textContent = "";
+    $("#loginModal").classList.remove("hidden");
+  }
+
+  function initAuth() {
+    renderAuthUI();
+    $("#btnUser").addEventListener("click", function () {
+      if (ZhouyiSync.isLoggedIn()) {
+        $("#userModal").classList.remove("hidden");
+      } else {
+        openLogin("login");
+      }
+    });
+    $("#loginSwitch").addEventListener("click", function () {
+      openLogin(auth.mode === "register" ? "login" : "register");
+    });
+    $("#loginSubmit").addEventListener("click", submitAuth);
+    $all("[data-close]").forEach(function (el) {
+      el.addEventListener("click", function () {
+        if (el.dataset.close === "login") $("#loginModal").classList.add("hidden");
+        else if (el.dataset.close === "user") $("#userModal").classList.add("hidden");
+      });
+    });
+    $("#loginModal").addEventListener("click", e => { if (e.target === $("#loginModal")) $("#loginModal").classList.add("hidden"); });
+    $("#userModal").addEventListener("click", e => { if (e.target === $("#userModal")) $("#userModal").classList.add("hidden"); });
+    $("#btnLogout").addEventListener("click", function () {
+      if (confirm("退出登录？本机记录会保留，云端记录不删除。")) {
+        ZhouyiSync.logout();
+        renderAuthUI();
+        $("#userModal").classList.add("hidden");
+      }
+    });
+    $("#btnSyncNow").addEventListener("click", function () {
+      const tip = $("#userSyncTip");
+      tip.textContent = "正在同步…";
+      syncAll().then(function (res) {
+        tip.textContent = "同步完成。" + (res.added ? "新增 " + res.added + " 条；" : "") + (res.pushed ? "上传 " + res.pushed + " 条。" : "记录已是最新。");
+      }).catch(function (err) {
+        tip.textContent = "同步失败：" + ((err && err.message) || "网络问题，稍后再试。");
+      });
+    });
+    // 恢复上次会话；若已登录则拉取云端记录
+    ZhouyiSync.init(function () { renderAuthUI(); }).then(function (user) {
+      if (user) syncAll().catch(function () {});
+    });
+  }
+
   /* ================= 初始化 ================= */
 
   function init() {
     loadRecords();
+    initAuth();
 
     // 导航
     $all(".nav-btn").forEach(b => b.addEventListener("click", () => switchView(b.dataset.view)));
@@ -1266,9 +1388,14 @@
     });
     $("#btnClearRecords").addEventListener("click", () => {
       if (confirm("确定清空所有起卦记录吗？")) {
+        state.records.forEach(r => ZhouyiSync.markDeleted(r.rid));
+        const toDel = state.records.filter(r => r.cloudId).map(r => r.cloudId);
         state.records = [];
         saveRecords();
         renderRecords();
+        if (ZhouyiSync.isLoggedIn()) {
+          toDel.forEach(id => ZhouyiSync.deleteCloud(id).catch(function () {}));
+        }
       }
     });
 
