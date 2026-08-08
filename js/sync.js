@@ -3,6 +3,8 @@
  * 基于 Supabase（免费）的 REST API 实现，自建用户表，无需邮件确认。
  * 未登录时一切照旧（仅保存在本机）；登录后起卦记录自动同步到云端，
  * 换手机 / 电脑登录同一账号即可恢复自己的记录。
+ * 
+ * 密码处理：使用简单哈希 + Base64 编码，保证跨平台一致。
  * ===================================================== */
 (function (w) {
   "use strict";
@@ -22,13 +24,20 @@
     return CFG.url && CFG.anonKey;
   }
 
-  /** SHA-256 加密密码 */
-  async function hashPassword(password) {
-    var encoder = new TextEncoder();
-    var data = encoder.encode(password);
-    var hashBuffer = await crypto.subtle.digest("SHA-256", data);
-    var hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+  /** 
+   * 跨平台一致的密码编码
+   * 使用 DJB2 哈希算法（纯数学运算），保证所有设备 100% 一致
+   * 不依赖任何浏览器 API，兼容所有环境
+   */
+  function encodePassword(password) {
+    // DJB2 哈希算法 - 纯字符串处理，跨平台完全一致
+    var hash = 5381;
+    for (var i = 0; i < password.length; i++) {
+      hash = ((hash << 5) + hash) + password.charCodeAt(i);
+      hash = hash & hash; // 转换为32位整数
+    }
+    // 转换为36进制字符串（最短表示）
+    return "p_" + Math.abs(hash).toString(36);
   }
 
   /** 生成 UUID */
@@ -100,7 +109,6 @@
       hook = cb;
       try { cur = JSON.parse(localStorage.getItem(SESSION_KEY)) || null; } catch (e) { cur = null; }
       if (cur && cur.token) {
-        // 验证用户是否仍存在
         return req("GET", "/rest/v1/app_users?select=id,email&id=eq." + encodeURIComponent(cur.userId))
           .then(function (users) {
             if (Array.isArray(users) && users.length > 0) {
@@ -124,44 +132,50 @@
 
     /** 注册（邮箱 + 密码），自建用户表，秒完成 */
     register: function (email, password) {
-      return hashPassword(password).then(function (hash) {
-        var userId = genUUID();
-        return req("POST", "/rest/v1/app_users", {
-          id: userId,
-          email: email.toLowerCase(),
-          password_hash: hash
-        }, { "Prefer": "return=representation" })
-          .then(function (data) {
-            var row = Array.isArray(data) ? data[0] : data;
-            cur = { userId: row.id, email: row.email, token: hash }; // 用密码哈希作会话 token（简单方案）
-            saveSession();
-            notify();
-            return cur;
-          })
-          .catch(function (err) {
-            if (err && err.message && err.message.indexOf("duplicate") >= 0) {
-              throw new Error("该邮箱已注册，请直接登录。");
-            }
-            throw err;
-          });
-      });
+      var encoded = encodePassword(password);
+      var userId = genUUID();
+      return req("POST", "/rest/v1/app_users", {
+        id: userId,
+        email: email.toLowerCase(),
+        password_hash: encoded
+      }, { "Prefer": "return=representation" })
+        .then(function (data) {
+          var row = Array.isArray(data) ? data[0] : data;
+          cur = { userId: row.id, email: row.email, token: encoded };
+          saveSession();
+          notify();
+          return cur;
+        })
+        .catch(function (err) {
+          if (err && err.message && err.message.indexOf("duplicate") >= 0) {
+            throw new Error("该邮箱已注册，请直接登录。");
+          }
+          throw err;
+        });
     },
 
     /** 登录 */
     login: function (email, password) {
-      return hashPassword(password).then(function (hash) {
-        return req("GET", "/rest/v1/app_users?select=*&email=eq." + encodeURIComponent(email.toLowerCase()) + "&password_hash=eq." + encodeURIComponent(hash))
-          .then(function (users) {
-            if (!Array.isArray(users) || users.length === 0) {
-              throw new Error("邮箱或密码错误。");
-            }
-            var row = users[0];
-            cur = { userId: row.id, email: row.email, token: hash };
-            saveSession();
-            notify();
-            return cur;
-          });
-      });
+      var encoded = encodePassword(password);
+      return req("GET", "/rest/v1/app_users?select=*&email=eq." + encodeURIComponent(email.toLowerCase()) + "&password_hash=eq." + encodeURIComponent(encoded))
+        .then(function (users) {
+          if (!Array.isArray(users) || users.length === 0) {
+            // 尝试查询是否存在该邮箱
+            return req("GET", "/rest/v1/app_users?select=id,email&email=eq." + encodeURIComponent(email.toLowerCase()))
+              .then(function (exists) {
+                if (Array.isArray(exists) && exists.length > 0) {
+                  throw new Error("密码错误，请重试。");
+                } else {
+                  throw new Error("该邮箱尚未注册，请先注册账号。");
+                }
+              });
+          }
+          var row = users[0];
+          cur = { userId: row.id, email: row.email, token: encoded };
+          saveSession();
+          notify();
+          return cur;
+        });
     },
 
     /** 退出登录 */
@@ -221,7 +235,7 @@
 
     /** 全量同步 */
     syncRecords: function (getLocal, saveLocal) {
-      if (!api.isLoggedIn()) return Promise.resolve({ added: 0, pushed: 0, removed: 0 });
+      if (!api.isLoggedIn()) return Promise.reject(new Error("请先登录后再同步"));
       var tombs = getDeleted();
       return api.pullAll().then(function (cloud) {
         var local = (getLocal() || []).slice();
