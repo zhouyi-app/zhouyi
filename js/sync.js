@@ -55,7 +55,9 @@
       "apikey": CFG.anonKey,
       "Content-Type": "application/json"
     };
-    if (cur && cur.token) headers["Authorization"] = "Bearer " + cur.token;
+    // 仅在持有真实 Supabase JWT（以 eyJ 开头）时才附加 Authorization；
+    // 自建用户表 + RLS 匿名策略只需 apikey 即可，错误的 Bearer token 会导致 401
+    if (cur && cur.token && cur.token.indexOf("eyJ") === 0) headers["Authorization"] = "Bearer " + cur.token;
     if (extraHeaders) {
       Object.keys(extraHeaders).forEach(function (k) { headers[k] = extraHeaders[k]; });
     }
