@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>周易 · 六十四卦智慧宝典</title>
+<link rel="stylesheet" href="css/style.css?v=20260808c">
+</head>
+<body>
+<div class="bg-deco"></div>
+
+  <button id="btnTop" class="btn-top" title="返回顶部">↑</button>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-mark">易</div>
+      <div>
+        <h1>周易智慧</h1>
+        <p>《易经》六十四卦 · 占筮 · 解卦 · 学习宝典</p>
+      </div>
+    </div>
+    <nav class="main-nav" id="mainNav">
+      <button class="nav-btn active" data-view="overview">卦象总览</button>
+      <button class="nav-btn" data-view="divine">在线起卦</button>
+      <button class="nav-btn" data-view="daily">每日一卦</button>
+      <button class="nav-btn" data-view="game">记忆游戏</button>
+      <button class="nav-btn" data-view="records">起卦记录</button>
+      <button class="nav-btn" data-view="study">学习宝典</button>
+      <button class="nav-btn" data-view="basics">基础入门</button>
+    </nav>
+    <button class="theme-toggle" id="btnTheme" title="切换日间 / 夜间模式">夜间模式</button>
+  </div>
+</header>
+
+<main id="app">
+
+  <!-- ============ 卦象总览 ============ -->
+  <section class="view active" id="view-overview">
+    <div class="view-head">
+      <h2>六十四卦总览</h2>
+      <p class="sub">伏羲画卦，文王演《易》。点击任意一卦，可查阅卦辞、彖传、象传、爻辞全文与白话详解。</p>
+    </div>
+    <div class="tools-bar">
+      <div class="search-box">
+        <input type="text" id="hexSearch" placeholder="搜索卦名、卦辞、关键词…">
+      </div>
+      <div class="filter-tabs">
+        <button class="chip active" data-filter="all">全部</button>
+        <button class="chip" data-filter="palace">按八宫</button>
+        <button class="chip" data-filter="sequence">卦序歌</button>
+      </div>
+    </div>
+    <div id="hexGrid" class="hex-grid"></div>
+    <div id="palaceList" class="palace-list hidden"></div>
+    <div id="sequenceSong" class="sequence-song hidden">
+      <h3>上下经卦名次序歌</h3>
+      <p class="song-text">乾坤屯蒙需讼师，比小畜兮履泰否。<br>
+      同人大有谦豫随，蛊临观兮噬嗑贲。<br>
+      剥复无妄大畜颐，大过坎离三十备。<br>
+      咸恒遁兮及大壮，晋与明夷家人睽。<br>
+      蹇解损益夬姤萃，升困井革鼎震继。<br>
+      艮渐归妹丰旅巽，兑涣节兮中孚至。<br>
+      小过既济兼未济，是为下经三十四。</p>
+      <h3>上下经卦名次序歌（分宫卦象次序）</h3>
+      <p class="song-text">乾为天，天风姤，天山遁，天地否，风地观，山地剥，火地晋，火天大有。<br>
+      坎为水，水泽节，水雷屯，水火既济，泽火革，雷火丰，地火明夷，地水师。<br>
+      艮为山，山火贲，山天大畜，山泽损，火泽睽，天泽履，风泽中孚，风山渐。<br>
+      震为雷，雷地豫，雷水解，雷风恒，地风升，水风井，泽风大过，泽雷随。<br>
+      巽为风，风天小畜，风火家人，风雷益，天雷无妄，火雷噬嗑，山雷颐，山风蛊。<br>
+      离为火，火山旅，火风鼎，火水未济，山水蒙，风水涣，天水讼，天火同人。<br>
+      坤为地，地雷复，地泽临，地天泰，雷天大壮，泽天夬，水天需，水地比。<br>
+      兑为泽，泽水困，泽地萃，泽山咸，水山蹇，地山谦，雷山小过，雷泽归妹。</p>
+    </div>
+  </section>
+
+  <!-- ============ 在线起卦 ============ -->
+  <section class="view" id="view-divine">
+    <div class="view-head">
+      <h2>在线起卦</h2>
+      <p class="sub">还没占过卦？别怕，跟着下面三步走，新手也能 3 分钟学会。占卜是古人用来启发思考的智慧游戏，结果仅供参考，帮助你看清自己的处境。</p>
+    </div>
+
+    <div class="beginner-steps">
+      <div class="bstep"><span class="bs-num">1</span><div><b>心里想好问题</b><p>先想清楚你要问什么，比如“这件事我该不该做？”“最近感情/工作会怎样？”想得越具体越好。</p></div></div>
+      <div class="bstep"><span class="bs-num">2</span><div><b>选一种方法，点按钮</b><p>随便选一个都行，跟着按钮提示点。最省事的是「心念起卦」，一键出结果。</p></div></div>
+      <div class="bstep"><span class="bs-num">3</span><div><b>看白话解读</b><p>结果出来后，重点看橙色的「白话导读」和「占断参考」，全是人话，不用懂任何术语。</p></div></div>
+    </div>
+
+    <div class="pre-divine-tip">
+      <div class="pdt-title">起卦前须知（老规矩）</div>
+      <div class="pdt-tags"><span>心诚则灵</span><span>一事一问</span><span>环境安静</span></div>
+      <p>古人起卦前要沐浴、焚香、静心凝神。今天不必这么讲究，但请在心里把问题想清楚，<b>一次只问一件事</b>。心越定，卦意越明朗。</p>
+    </div>
+
+    <div class="question-bar">
+      <label for="questionInput">你问的是什么事？<span>（选填，写下来结果更好懂）</span></label>
+      <input type="text" id="questionInput" maxlength="60" placeholder="例：我最近该不该换工作？ 这段感情会有结果吗？ 今年学业运如何？…">
+    </div>
+
+    <div class="divine-layout">
+      <aside class="divine-panel">
+        <h3>选择起卦方法</h3>
+        <div class="method-list">
+          <button class="method-card active" data-method="coin">
+            <span class="method-icon">钱</span>
+            <div>
+              <strong>三枚铜钱法</strong>
+              <small>以钱代蓍 · 六掷成卦 · 最流行</small>
+            </div>
+          </button>
+          <button class="method-card" data-method="yarrow">
+            <span class="method-icon">蓍</span>
+            <div>
+              <strong>大衍蓍草法</strong>
+              <small>最古老 · 十八变而成卦</small>
+            </div>
+          </button>
+          <button class="method-card" data-method="plum">
+            <span class="method-icon">梅</span>
+            <div>
+              <strong>梅花易数</strong>
+              <small>邵康节 · 时间/数字起卦</small>
+            </div>
+          </button>
+          <button class="method-card" data-method="random">
+            <span class="method-icon">易</span>
+            <div>
+              <strong>心念起卦</strong>
+              <small>诚心随机 · 一键成卦</small>
+            </div>
+          </button>
+        </div>
+
+        <div class="method-setup">
+          <!-- 铜钱法设置 -->
+          <div class="setup-block" id="setup-coin">
+            <p class="hint">双手合十，将三枚铜钱摇晃数次后掷出，从下往上记六次。掷前默念所问之事。三背为「老阳 ○」，二背为「少阳 —」，一背为「少阴 --」，无背为「老阴 ×」。</p>
+            <button class="btn-primary" id="btnThrows">掷铜钱（第 1 次 / 共 6 次）</button>
+            <div id="coinLog" class="yarrow-log"></div>
+          </div>
+          <!-- 蓍草法设置 -->
+          <div class="setup-block hidden" id="setup-yarrow">
+            <p class="hint">大衍之数五十，其用四十有九。分二、挂一、揲四、归奇，三变得一爻，十八变得一卦。点击逐步演示。</p>
+            <button class="btn-primary" id="btnYarrow">分揲蓍草（第 1 变）</button>
+            <div id="yarrowLog" class="yarrow-log"></div>
+          </div>
+          <!-- 梅花易数设置 -->
+          <div class="setup-block hidden" id="setup-plum">
+            <p class="hint">以先天八卦数起卦：乾一、兑二、离三、震四、巽五、坎六、艮七、坤八。</p>
+            <div class="field-row">
+              <label>时间起卦（年月日时）</label>
+              <input type="datetime-local" id="plumTime" value="">
+              <button class="btn-primary btn-sm" id="btnPlumTime">以当前时间起卦</button>
+            </div>
+            <div class="field-row">
+              <label>报数起卦（两/三个数字）</label>
+              <div class="inline-inputs">
+                <input type="number" id="num1" placeholder="数一" min="0">
+                <input type="number" id="num2" placeholder="数二" min="0">
+                <input type="number" id="num3" placeholder="数三(可空)" min="0">
+              </div>
+              <button class="btn-primary btn-sm" id="btnPlumNum">以数字起卦</button>
+            </div>
+          </div>
+          <!-- 随机 -->
+          <div class="setup-block hidden" id="setup-random">
+            <p class="hint">静心默念所问之事，心诚则灵。点击后由程序随机生成六爻（老阳、少阳、少阴、老阴）。</p>
+            <button class="btn-primary" id="btnRandom">心念起卦</button>
+          </div>
+        </div>
+      </aside>
+
+      <section class="divine-result" id="divineResult">
+        <div id="castAnim" class="cast-anim hidden"></div>
+        <div class="empty-state">
+          <div class="empty-icon">卦</div>
+          <p>尚未起卦。请选择一种方法开始。</p>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ 每日一卦 ============ -->
+  <section class="view" id="view-daily">
+    <div class="view-head">
+      <h2>每日一卦</h2>
+      <p class="sub">以今日日期为引，取一卦与你聊聊：换种心情，换个角度看今天。仅供趣味参考。</p>
+    </div>
+    <div id="dailyBox" class="daily-box"></div>
+    <div class="daily-actions">
+      <button class="btn-primary" id="btnDailyToday">今日之卦</button>
+      <button class="btn-ghost" id="btnDailyShuffle">换一卦（随机）</button>
+    </div>
+  </section>
+
+  <!-- ============ 记忆游戏 ============ -->
+  <section class="view" id="view-game">
+    <div class="view-head">
+      <h2>记忆游戏 · 认卦速记</h2>
+      <p class="sub">看卦画猜卦名，或者反过来看卦名找卦画，闯关越多记得越牢。答对加分、连击翻倍，答错也不怕——它会告诉你正确答案。</p>
+    </div>
+    <div class="game-mode-bar">
+      <button class="chip active" id="gameModeSym2Name">看卦画 → 猜卦名</button>
+      <button class="chip" id="gameModeName2Sym">看卦名 → 找卦画</button>
+    </div>
+    <div class="game-panel">
+      <div class="game-scorebar">
+        <span>第 <b id="gameLevel">1</b> 关</span>
+        <span>得分 <b id="gameScore">0</b></span>
+        <span>最佳 <b id="gameBest">0</b></span>
+        <span>连击 <b id="gameStreak">0</b></span>
+        <span>正确率 <b id="gameAcc">–</b></span>
+        <button class="btn-ghost" id="btnGameRestart">重新开始</button>
+      </div>
+      <div id="gameHex" class="game-hex"></div>
+      <div id="gameOptions" class="game-options"></div>
+      <div class="game-tip-btn"><button class="btn-ghost" id="btnGameTip">提示：上下卦（扣 5 分）</button></div>
+      <div id="gameHint" class="game-hint"></div>
+    </div>
+  </section>
+
+  <!-- ============ 起卦记录 ============ -->
+  <section class="view" id="view-records">
+    <div class="view-head">
+      <h2>起卦记录</h2>
+      <p class="sub">历次占筮存于本机浏览器，点击记录可重新查看解卦详情。备份请用「导出记录」，换设备可用「导入记录」恢复。</p>
+      <div class="head-actions">
+        <button class="btn-ghost" id="btnImportRecords">导入记录</button>
+        <button class="btn-ghost" id="btnExportRecords">导出记录</button>
+        <button class="btn-ghost" id="btnClearRecords">清空记录</button>
+        <input type="file" id="recImportInput" accept="application/json,.json" style="display:none">
+      </div>
+      <div id="recStats" class="rec-stats"></div>
+      <div class="rec-filter-row">
+        <label>按方法筛选：</label>
+        <select id="recFilter"><option value="all">全部方法</option></select>
+      </div>
+    </div>
+    <div id="recordsList" class="records-list"></div>
+  </section>
+
+  <!-- ============ 学习宝典 ============ -->
+  <section class="view" id="view-study">
+    <div class="view-head">
+      <h2>学习宝典</h2>
+      <p class="sub">深入研习《周易》经文：六十四卦全文、卦象义理、古法解卦规则。</p>
+    </div>
+    <div class="study-layout">
+      <aside class="study-side">
+        <h3>目录</h3>
+        <ul id="studyToc" class="study-toc">
+          <li data-target="study-beginner" class="active">零基础入门（先看这篇）</li>
+          <li data-target="study-quickref">64卦速查记忆表</li>
+          <li data-target="study-classics">经文详解（按卦序）</li>
+          <li data-target="study-principles">解卦七则（朱熹占例）</li>
+          <li data-target="study-tiyong">体用生克（梅花易数）</li>
+          <li data-target="study-liuyao">六爻纳甲进阶</li>
+          <li data-target="study-methods">起卦方法详解</li>
+          <li data-target="study-glossary">易学名词小词典</li>
+          <li data-target="study-stories">周易里的故事</li>
+          <li data-target="study-history">周易源流</li>
+        </ul>
+      </aside>
+      <article class="study-content">
+        <div id="study-beginner" class="study-block active">
+          <h3>零基础入门：用 10 分钟看懂《周易》</h3>
+          <div class="beginner-article">
+            <h4>1. 什么是「卦」？</h4>
+            <p>「卦」就是一幅由六条横线组成的符号图，从上到下或从下到上排列。每条横线叫一「爻」（yáo）。<br>
+            一条完整的长横（━）叫<b>阳爻</b>，代表天、刚、动、男人、积极的一面；<br>
+            一条断开的短横（╌）叫<b>阴爻</b>，代表地、柔、静、女人、被动的一面。<br>
+            六条爻上下组合，一共能排出 <b>64 种</b>图案，这就是「六十四卦」。每一卦都有自己的名字、卦辞和六条爻辞，相当于一套「人生情景说明书」。</p>
+
+            <h4>2. 为什么算卦？它到底是什么？</h4>
+            <p>古人遇到拿不定主意的事（出门、嫁娶、打仗、治病……），就通过一些随机仪式（掷蓍草、摇铜钱）得到一卦，再用卦辞爻辞来启发思考。<br>
+            它<u>不是</u>预知未来的魔法，而是一种<b>“带着问题换角度思考”</b>的古老智慧：卦象和文字像一面镜子，帮你看清自己的处境、心态和可能的方向。所以不用神化它，也不必害怕它。</p>
+
+            <h4>3. 起卦是什么？怎么起？</h4>
+            <p>「起卦」就是通过随机方式生成那六条爻。本程序提供四种正统方法：<br>
+            · <b>三枚铜钱法</b>：摇三次铜钱记一爻，摇六次成一卦（最常用）；<br>
+            · <b>大衍蓍草法</b>：用 50 根蓍草按《系辞》古法分二、挂一、揲四，十八变成一卦（最古老）；<br>
+            · <b>梅花易数</b>：用年月日时或任意两个数字算出卦（邵雍所创）；<br>
+            · <b>心念起卦</b>：默想问题后一键随机（最省事）。<br>
+            起卦前建议：静下心来，把问题想清楚（越具体越好），然后选一种方法照着点按钮即可。</p>
+
+            <h4>4. 什么是「动爻」？为什么有的爻会变？</h4>
+            <p>起卦时，某些爻会出现「老阳 ○」或「老阴 ×」的状态，这叫<b>动爻</b>，意思是「这个位置要变化」。<br>
+            爻一变，整卦就变成另一幅图（叫「之卦」）。传统认为：<br>
+            · 动爻代表事情中的<b>关键转折点</b>，要重点看；<br>
+            · 没有动爻（六爻皆静），就看整卦的卦辞；<br>
+            · 有动爻，就重点看动爻的爻辞。<br>
+            白话一点说：没变化看大方向，有变化看变化处。</p>
+
+            <h4>5. 怎么快速看懂一次占卦结果？</h4>
+            <p>看结果时记住三步：<br>
+            ① 先看顶部橙色的<b>「白话导读」</b>——一句话告诉你这卦的基调；<br>
+            ② 再看<b>「卦在说什么」</b>和<b>「变化提示」</b>——理解这个卦在讲什么情境；<br>
+            ③ 最后对照你问的事，看<b>「占断参考」</b>里事业/感情/决策那一条。<br>
+            其他术语（互卦、错卦、体用、纳甲……）看不懂完全没关系，那是进阶内容，用得上再来学。</p>
+
+            <h4>6. 看完卦以后呢？</h4>
+            <p>把卦象当成一位老朋友的提醒：它帮你注意到可能忽略的角度，但<b>决定权永远在你手里</b>。开心时来一卦助兴，纠结时来一卦理思路，把它当作一面镜子就好。</p>
+          </div>
+        </div>
+        <div id="study-quickref" class="study-block">
+          <h3>64卦速查记忆表</h3>
+          <p class="note">一页看完全部六十四卦：卦画、卦名 + 一句白话看懂它。点任意一行可看完整详解，是背卦名最快的办法。</p>
+          <div id="studyQuickRef" class="quickref-wrap"></div>
+        </div>
+        <div id="study-classics" class="study-block">
+          <h3>经文详解</h3>
+          <div class="study-hex-nav">
+            <label>跳转卦象：</label>
+            <button class="btn-ghost btn-sm" id="btnStudyPrev">‹ 上一卦</button>
+            <select id="studyHexSelect"></select>
+            <button class="btn-ghost btn-sm" id="btnStudyNext">下一卦 ›</button>
+          </div>
+          <div id="studyHexContent"></div>
+        </div>
+        <div id="study-principles" class="study-block">
+          <h3>解卦七则（朱熹《易学启蒙》占例）</h3>
+          <div class="principle-list">
+            <div class="principle"><span class="p-num">一</span><div><strong>六爻不变</strong><p>以本卦卦辞断之。所占之事以整卦之大义为吉凶依据。</p></div></div>
+            <div class="principle"><span class="p-num">二</span><div><strong>一爻变</strong><p>以本卦变爻之爻辞断之。变爻为主，为事之枢机。</p></div></div>
+            <div class="principle"><span class="p-num">三</span><div><strong>两爻变</strong><p>以本卦两变爻爻辞断之，但以上位之变爻为主。</p></div></div>
+            <div class="principle"><span class="p-num">四</span><div><strong>三爻变</strong><p>占本卦及之卦之卦辞，而以本卦为贞（主事者），之卦为悔（所趋之结果）。</p></div></div>
+            <div class="principle"><span class="p-num">五</span><div><strong>四爻变</strong><p>以之卦中两个不变爻爻辞断之，以下位之不变爻为主。</p></div></div>
+            <div class="principle"><span class="p-num">六</span><div><strong>五爻变</strong><p>以之卦中唯一不变爻之爻辞断之。</p></div></div>
+            <div class="principle"><span class="p-num">七</span><div><strong>六爻全变</strong><p>乾坤二卦用“用九”“用六”断之；其余六十二卦以之卦卦辞断之。</p></div></div>
+          </div>
+          <p class="note">按：此七则出自朱子《易学启蒙》，为传统占法之纲领。另有以变爻多少定吉凶轻重、以世应定事主等法，皆宗于此。</p>
+        </div>
+        <div id="study-tiyong" class="study-block">
+          <h3>体用生克（梅花易数）</h3>
+          <p>梅花易数以“体”为自身、为静、为内、为主；以“用”为事体、为动、为外、为客。动爻所在之卦为用卦，另一卦为体卦。</p>
+          <div class="relation-grid">
+            <div class="rel good"><strong>用生体</strong><p>他方生助我，事有贵人扶持，吉，谋事可成。</p></div>
+            <div class="rel good"><strong>体用比和</strong><p>双方同心协力，顺利吉祥，无往不利。</p></div>
+            <div class="rel mid"><strong>体克用</strong><p>我克制他方，事可成但费力、迟缓，须主动争取。</p></div>
+            <div class="rel bad"><strong>用克体</strong><p>他方制约我，谋事难成，易遭阻碍，宜守不宜攻。</p></div>
+            <div class="rel bad"><strong>体生用</strong><p>我泄气于他方，耗费心血、付出多而收效少，宜防损耗。</p></div>
+          </div>
+          <h4>五行生克简表</h4>
+          <p class="note">相生：木生火、火生土、土生金、金生水、水生木。<br>相克：木克土、土克水、水克火、火克金、金克木。<br>体用五行取卦之五行：乾兑属金，震巽属木，坎属水，离属火，坤艮属土。</p>
+          <h4>本卦、互卦、变卦</h4>
+          <p class="note">本卦为事之初始、现状；互卦（取本卦二三四爻为下互卦、三四五爻为上互卦）为事之中间过程、内因；变卦（动爻阴阳互变后所得）为事之结局、所趋。观三卦可推始、中、终。</p>
+        </div>
+        <div id="study-liuyao" class="study-block">
+          <h3>六爻纳甲进阶</h3>
+          <p>六爻（纳甲筮法）在经卦之上装以干支、五行、六亲、世应、六神，以五行生克断吉凶。本程序起卦后可在“六爻装卦”面板中自动排出。</p>
+          <h4>八宫所属五行</h4>
+          <p class="note">乾宫属金，兑宫属金；离宫属火；震宫属木，巽宫属木；坎宫属水；坤宫属土，艮宫属土。</p>
+          <h4>六亲取法</h4>
+          <p class="note">以宫之五行为“我”：生我者为父母，我生者为子孙，克我者为官鬼，我克者为妻财，同我者为兄弟。断事时：父母主文书、长辈、辛劳；兄弟主竞争、破财、同伴；子孙主福泽、财源、解忧；妻财主钱财、妻室；官鬼主功名、官非、忧患。</p>
+          <h4>六神装法</h4>
+          <p class="note">按起卦日之天干顺布：甲乙日起青龙、朱雀、勾陈、螣蛇、白虎、玄武；丙丁日起朱雀、勾陈、螣蛇、白虎、玄武、青龙；戊日起勾陈、螣蛇、白虎、玄武、青龙、朱雀；己日起螣蛇、白虎、玄武、青龙、朱雀、勾陈；庚辛日起白虎、玄武、青龙、朱雀、勾陈、螣蛇；壬癸日起玄武、青龙、朱雀、勾陈、螣蛇、白虎。</p>
+          <h4>世应定位</h4>
+          <p class="note">八纯卦世在六爻、应在三爻；一世卦世在初爻、应在四爻；二世卦世在二爻、应在五爻；三世卦世在三爻、应在六爻；四世卦世在四爻、应在初爻；五世卦世在五爻、应在二爻；游魂卦世在四爻、应在初爻；归魂卦世在三爻、应在六爻。</p>
+        </div>
+        <div id="study-methods" class="study-block">
+          <h3>起卦方法详解</h3>
+          <h4>一、大衍筮法（蓍草法）</h4>
+          <p class="note">《系辞》云：“大衍之数五十，其用四十有九。分而为二以象两，挂一以象三，揲之以四以象四时，归奇于扐以象闰。”步骤如下：<br>
+          1. 取蓍草五十根，除去一根不用，余四十九根。<br>
+          2. 任意分为左右两堆，象天与地（分二）。<br>
+          3. 从右堆取一根夹于左手小指间，象三才（挂一）。<br>
+          4. 左堆以四根一组数之，余数（或四）夹于指间（揲四）。<br>
+          5. 右堆同样以四根一组数之，余数夹于指间（归奇）。<br>
+          6. 两堆余数加上挂一之和必为五或九，此为“一变”。<br>
+          7. 余下之蓍合拢，重复分二、挂一、揲四、归奇，得二变；再重复得三变。<br>
+          8. 三变之后：余三十六根为老阳（九，动爻，画作“○”）；余三十二根为少阴（八，画作“--”）；余二十八根为少阳（七，画作“—”）；余二十四根为老阴（六，画作“×”）。<br>
+          9. 由初爻至上爻，十八变而成一卦。老阳、老阴为变爻。</p>
+          <h4>二、三枚铜钱法（以钱代蓍）</h4>
+          <p class="note">取三枚铜钱（乾隆通宝等），有字一面为“字”（阴），无字一面为“背”（阳）。掷一次记一爻，由下而上共六次。<br>
+          · 三背（○）：老阳，阳爻动，记“—○”<br>
+          · 二背一字（—）：少阳，阳爻静，记“—”<br>
+          · 一背二字（--）：少阴，阴爻静，记“--”<br>
+          · 三字（×）：老阴，阴爻动，记“--×”<br>
+          动爻为老阳、老阴，其阴阳互变而成之卦。朱子云“三背为老阳”亦可行，各遵所传，成卦则一。</p>
+          <h4>三、梅花易数</h4>
+          <p class="note">先天卦数：乾一、兑二、离三、震四、巽五、坎六、艮七、坤八。<br>
+          · 时间起卦：以年支序数（子1…亥12）+月数+日数，三数之和除以8，余数为上卦；再加时支序数除以8，余数为下卦；总和除以6，余数为动爻。<br>
+          · 数字起卦：取两个数分别除以8得上下卦；三个数时，前两数得上卦（两数之和除8），第三数得下卦；动爻以总数字和除以6取余。<br>
+          · 八卦万物类象：乾为天、君、父、刚健；坤为地、母、柔顺；震为雷、长子、动；巽为风、长女、入；坎为水、中男、险；离为火、中女、丽；艮为山、少男、止；兑为泽、少女、悦。</p>
+        </div>
+        <div id="study-glossary" class="study-block">
+          <h3>易学名词小词典</h3>
+          <p class="note">看卦时遇到不懂的词，来这里查。全部用一句大白话解释，随查随懂。</p>
+          <div class="glossary-list">
+            <div class="gl-item"><b>卦</b><span>由六条横线组成的符号图，一卦代表一种人生处境或事物状态。</span></div>
+            <div class="gl-item"><b>爻（yáo）</b><span>组成卦的那条横线，一卦有六爻。长横为阳爻，断横为阴爻。</span></div>
+            <div class="gl-item"><b>阳爻 / 阴爻</b><span>阳爻画作一条长横，代表刚、动、积极；阴爻画作两段短横，代表柔、静、消极。</span></div>
+            <div class="gl-item"><b>本卦</b><span>起卦得到的那个卦，代表事情的当下现状。</span></div>
+            <div class="gl-item"><b>之卦（变卦）</b><span>动爻变掉以后形成的新卦，代表事情演变的结果。</span></div>
+            <div class="gl-item"><b>动爻</b><span>起卦时出现的「老阳○」「老阴×」那几条爻，表示事情的关键变化点。</span></div>
+            <div class="gl-item"><b>卦辞</b><span>整卦的总说明，一句话概括这一卦讲的道理。</span></div>
+            <div class="gl-item"><b>爻辞</b><span>每一爻的解释文字，六爻六条，讲的是这一步该怎么做。</span></div>
+            <div class="gl-item"><b>彖（tuàn）传</b><span>孔子给卦辞作的传注，解释卦辞的道理，像「老师划重点」。</span></div>
+            <div class="gl-item"><b>象传</b><span>分大象、小象：大象讲整卦比喻；小象逐条解释每一爻。</span></div>
+            <div class="gl-item"><b>十翼</b><span>孔子作的十篇传文（彖上下、象上下、系辞上下、文言、说卦、序卦、杂卦），像《易经》的「使用说明书」。</span></div>
+            <div class="gl-item"><b>元亨利贞</b><span>乾卦卦辞四字：元（开始）、亨（通达）、利（有利）、贞（守正），连起来就是「大通而宜守正」。</span></div>
+            <div class="gl-item"><b>吉凶悔吝</b><span>四种占断结果：吉（好）、凶（不好）、悔（后悔、可改）、吝（遗憾、要小心）。</span></div>
+            <div class="gl-item"><b>错卦</b><span>把六爻全部阴阳颠倒的卦，看事情的「反面」。</span></div>
+            <div class="gl-item"><b>综卦</b><span>把卦上下倒过来看的卦，看事情的「颠倒过来」的样子。</span></div>
+            <div class="gl-item"><b>互卦</b><span>取本卦中间四条爻重新拼出的卦，看事情的「中途过程」。</span></div>
+            <div class="gl-item"><b>体卦 / 用卦</b><span>梅花易数术语：体卦代表「你自己」，用卦代表「你要面对的事」，两者五行关系定吉凶。</span></div>
+            <div class="gl-item"><b>比和</b><span>体卦用卦五行相同，双方同心，多吉。</span></div>
+            <div class="gl-item"><b>八宫</b><span>京房把六十四卦分成八组（乾坎艮震巽离坤兑），每组八卦，用于排六亲世应。</span></div>
+            <div class="gl-item"><b>纳甲</b><span>把天干地支装进八卦的方法，六爻排盘的基础。</span></div>
+            <div class="gl-item"><b>世爻 / 应爻</b><span>世爻代表求占者自己，应爻代表对方或所问之事，中间隔三位。</span></div>
+            <div class="gl-item"><b>六亲</b><span>父母、兄弟、子孙、妻财、官鬼，用五行生克算出来，各管一类事（如妻财主钱财）。</span></div>
+            <div class="gl-item"><b>六神</b><span>青龙、朱雀、勾陈、螣蛇、白虎、玄武，按日干排列，辅助判断事物性质。</span></div>
+            <div class="gl-item"><b>先天八卦数</b><span>乾一、兑二、离三、震四、巽五、坎六、艮七、坤八，梅花易数起卦用。</span></div>
+            <div class="gl-item"><b>大衍之数</b><span>蓍草占法的五十之数，去一用四十九，十八变成一卦。</span></div>
+            <div class="gl-item"><b>用九 / 用六</b><span>只有乾坤两卦有：乾卦六爻全变看用九，坤卦六爻全变看用六。</span></div>
+          </div>
+        </div>
+        <div id="study-stories" class="study-block">
+          <h3>周易里的故事</h3>
+          <p class="note">《周易》不只是占卜手册，它背后的故事同样动人。读完这些故事，你会更懂为什么它能流传三千年。</p>
+          <div class="story-list">
+            <div class="story-item">
+              <b>文王拘而演《周易》</b>
+              <p>商朝末年，周文王姬昌被纣王囚禁在羑里（今河南汤阴）。他在狱中无事可做，便把伏羲的八卦两两相叠，推演出了六十四卦——今天你看到的每一卦，据说都源自他在囚牢里的那次沉思。司马迁后来写道："文王拘而演《周易》"，把这当作逆境里成大业的第一例。</p>
+            </div>
+            <div class="story-item">
+              <b>韦编三绝</b>
+              <p>孔子晚年特别爱读《易》，翻来覆去地看，把串竹简的牛皮绳都磨断了好几次，这就是"韦编三绝"。他说："再给我几年时间，五十岁就能把《易》研究明白了。"他还给《易经》写了注解，后人称为《十翼》——就像给经典插上了十只翅膀。</p>
+            </div>
+            <div class="story-item">
+              <b>玩辞观象</b>
+              <p>《系辞》里说，君子"居则观其象而玩其辞，动则观其变而玩其占"——闲下来就琢磨卦象卦辞，做事前再研究它的变化和占断。孔子的态度是：读《易》不是为了算命，而是为了从变化中看到做事的道理。</p>
+            </div>
+            <div class="story-item">
+              <b>观梅占</b>
+              <p>宋代邵雍在花园里看梅花，见两只麻雀争枝跌落。他随手用年月日时起卦，断出"明晚会有个女孩来折花，受惊摔倒伤了大腿"。第二天果然应验。这就是《梅花易数》的开篇故事，也是"梅花易数"名字的由来——万物皆可起卦，处处留心皆学问。</p>
+            </div>
+            <div class="story-item">
+              <b>京房与纳甲</b>
+              <p>西汉的京房把天干地支装进六十四卦，又定出八宫、世应、六亲、六神，让占筮有了完整的"排盘"体系。今天解卦里那些看似复杂的术语，源头大多在他这里。他最终因卷入朝堂纷争被害，但"京氏易"影响了后世一千多年。</p>
+            </div>
+            <div class="story-item">
+              <b>朱熹与《周易本义》</b>
+              <p>南宋朱熹主张"易本卜筮之书"——《周易》首先是用来占卜的，经文之外还有实打实的方法。他恢复了上古的筮法（就是本程序的"大衍蓍草法"），还提出"解卦七则"，教人不同变爻情况该看哪段文字，让占筮第一次有了清晰的操作指南。</p>
+            </div>
+            <div class="story-item">
+              <b>龟卜与蓍占</b>
+              <p>商代人用龟甲占卜：在龟甲上钻孔烧灼，看裂纹的形状定吉凶。周代改用蓍草，取五十根草茎演算。古人说"筮短龟长"——蓍草起卦快、学起来容易，龟卜烧制慢、看得深。两种方法都流传很久，后来蓍草占慢慢成了主流。</p>
+            </div>
+          </div>
+        </div>
+        <div id="study-history" class="study-block">
+          <h3>周易源流</h3>
+          <p class="note"><strong>上古三易：</strong>《周礼》载太卜掌三易之法：一曰《连山》（首艮），二曰《归藏》（首坤），三曰《周易》（首乾）。前二易久佚，唯《周易》传世。<br><br>
+          <strong>人更三圣，世历三古：</strong>相传伏羲画八卦（上古），文王拘而演《周易》，重为六十四卦并系卦辞（中古）；周公旦作爻辞；孔子晚年读《易》韦编三绝，作《十翼》（彖上传、彖下传、象上传、象下传、系辞上传、系辞下传、文言传、说卦传、序卦传、杂卦传），为《易》作传（下古）。<br><br>
+          <strong>易之三义：</strong>《易纬·乾凿度》云“易一名而含三义：易简一也，变易二也，不易三也”。<br><br>
+          <strong>两派六宗：</strong>汉儒孟喜、京房创象数之学，开纳甲、世应、飞伏之先河；魏王弼清谈玄理，崇义理而扫象数；宋邵雍创先天之学，程颐作《伊川易传》主理，朱熹作《周易本义》兼取象数卜筮。故有象数、义理两派，占候、禨祥、造化、老庄、儒理、史事六宗。<br><br>
+          <strong>经传结构：</strong>《周易》本经六十四卦，每卦有卦画、卦名、卦辞、爻辞（三百八十四爻，另有乾坤用九用六），为经文；《十翼》为传文，合称《易传》。传世以王弼本、朱熹《周易本义》本最通行。</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ 基础入门 ============ -->
+  <section class="view" id="view-basics">
+    <div class="view-head">
+      <h2>基础入门</h2>
+      <p class="sub">由浅入深：阴阳五行、八卦取象、天干地支，为研读《易》之根基。</p>
+    </div>
+    <div class="basics-grid">
+      <div class="basic-card">
+        <h3>阴阳之道</h3>
+        <p><strong>打比方：</strong>阴阳就像电灯开关——有开（阳）就有关（阴），有白天就有黑夜，有刚强就有柔顺，两者互为条件、互相转化，谁也不能单独存在。<br><br>
+        《易》以阴阳为纲。一画开天，阳爻“—”象天、刚、动、君、男；阴爻“--”象地、柔、静、臣、女。六爻由下而上，初、三、五为阳位，二、四、上为阴位；阳爻居阳位、阴爻居阴位为“得位”（位置合适，多吉），反之“失位”（位置别扭，多咎）。</p>
+      </div>
+      <div class="basic-card">
+        <h3>五行生克</h3>
+        <p><strong>打比方：</strong>五行是古人给世界分的五种“脾气”——木（生长）、火（热烈）、土（包容）、金（坚硬）、水（流动）。<br>
+        <b>相生</b>（一个帮一个）：木生火、火生土、土生金、金生水、水生木。<br>
+        <b>相克</b>（一个管一个）：木克土、土克水、水克火、火克金、金克木。<br>
+        五行配卦：乾兑金，震巽木，坎水，离火，坤艮土。占断中五行生克为吉凶之本。</p>
+        <div id="wuxingChart"></div>
+      </div>
+      <div class="basic-card">
+        <h3>八卦取象</h3>
+        <div id="trigramTable" class="trigram-table"></div>
+      </div>
+      <div class="basic-card">
+        <h3>天干地支</h3>
+        <p><strong>打比方：</strong>天干地支就像一套「年号 + 序号」的日历系统，古人用它记时间、配五行。<br>
+        <strong>十天干：</strong>甲（木）乙（木）丙（火）丁（火）戊（土）己（土）庚（金）辛（金）壬（水）癸（水）。<br>
+        <strong>十二地支：</strong>子（水）丑（土）寅（木）卯（木）辰（土）巳（火）午（火）未（土）申（金）酉（金）戌（土）亥（水）。<br>
+        地支序数（梅花时间起卦用）：子1、丑2、寅3、卯4、辰5、巳6、午7、未8、申9、酉10、戌11、亥12。</p>
+      </div>
+      <div class="basic-card">
+        <h3>六爻之象</h3>
+        <p><strong>打比方：</strong>把一卦想成一座六层小楼——从地下室到顶楼，每一层住着不同身份的人。<br>
+        初爻（底层）= 起步、基层、脚；二爻 = 家宅、日常；三爻 = 门户、转折点（最容易出状况）；四爻 = 靠近领导的位置（要小心谨慎）；五爻 = 顶层领导位（最尊贵）；上爻 = 顶楼/退隐（事情收尾）。<br>
+        观爻位高下、当位与否，可断人物处境。</p>
+      </div>
+      <div class="basic-card">
+        <h3>卦变与错综</h3>
+        <p><strong>打比方：</strong>一个卦就像一枚硬币，可以从不同角度观察：<br>
+        <b>错卦（对卦）：</b>把六爻全部黑白颠倒（乾变坤），看到事情相反的一面。<br>
+        <b>综卦（覆卦）：</b>把卦上下倒过来看（屯倒过来是蒙），看到事情倒过来的样子。<br>
+        <b>互卦：</b>从卦里“抽中间四条爻”重新拼出中段过程，看事情的中途发展。<br>
+        <b>变卦（之卦）：</b>动爻一变，整卦变成的结局图。<br>
+        简记：错卦看反面，综卦看颠倒，互卦看过程，变卦看结局。</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============ 卦象详情弹窗 ============ -->
+<div class="modal-mask hidden" id="hexModal">
+  <div class="modal">
+    <button class="modal-close" id="modalClose">×</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <p>《周易》· 群经之首，大道之源 —— 本程序仅供传统文化研究与学习交流之用</p>
+</footer>
+
+<script src="js/data_base.js?v=20260808c"></script>
+<script src="js/data_hex1.js?v=20260808c"></script>
+<script src="js/data_hex2.js?v=20260808c"></script>
+<script src="js/data_hex3.js?v=20260808c"></script>
+<script src="js/data_hex4.js?v=20260808c"></script>
+<script src="js/app.js?v=20260808c"></script>
+</body>
+</html>
+

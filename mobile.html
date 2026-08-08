@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f6f1e7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>周易 · 手机版</title>
+<link rel="stylesheet" href="css/style_mobile.css?v=20260808d">
+</head>
+<body>
+
+<header class="m-head">
+  <div class="m-brand">
+    <div class="m-brand-mark">易</div>
+    <div>
+      <h1>周易智慧 · 手机版</h1>
+      <p>六十四卦 · 占筮 · 学习宝典</p>
+    </div>
+  </div>
+  <button class="m-theme" id="mTheme">夜间</button>
+</header>
+
+<main id="app">
+
+  <!-- ============ 起卦 ============ -->
+  <section class="m-view active" id="view-cast">
+    <div class="m-view-head">
+      <h2>在线起卦</h2>
+      <p>心里想好一件具体的事，选个方法，跟着点按钮就好。结果仅供参考，帮助你看清处境。</p>
+    </div>
+
+    <div class="m-qbar">
+      <input type="text" id="mQuestion" maxlength="60" placeholder="你问的是什么事？（选填）">
+    </div>
+
+    <div class="m-methods">
+      <button class="m-method active" data-method="coin">铜钱</button>
+      <button class="m-method" data-method="yarrow">蓍草</button>
+      <button class="m-method" data-method="plum">梅花</button>
+      <button class="m-method" data-method="random">随机</button>
+    </div>
+
+    <div class="m-setup" id="setup-coin">
+      <p class="m-hint">双手合十摇三枚铜钱，掷出后从下往上记。三背为老阳○、二背为少阳、一背为少阴、三字为老阴×。共掷六次。</p>
+      <button class="m-btn-primary" id="mBtnCoin">掷铜钱（第 1 次 / 共 6 次）</button>
+      <div class="m-log" id="mCoinLog"></div>
+    </div>
+    <div class="m-setup hidden" id="setup-yarrow">
+      <p class="m-hint">大衍之数五十，其用四十有九。十八变而成卦，过程全自动，点一次完成。</p>
+      <button class="m-btn-primary" id="mBtnYarrow">蓍草起卦（十八变）</button>
+      <div class="m-log" id="mYarrowLog"></div>
+    </div>
+    <div class="m-setup hidden" id="setup-plum">
+      <p class="m-hint">报两个数字起卦（任意正整数），或直接用当前时间起卦。</p>
+      <div class="m-nums">
+        <input type="number" id="mNum1" placeholder="数一" min="1">
+        <input type="number" id="mNum2" placeholder="数二" min="1">
+      </div>
+      <div class="m-btn-row">
+        <button class="m-btn-primary btn-sm" id="mBtnPlumNum">以数字起卦</button>
+        <button class="m-btn-ghost btn-sm" id="mBtnPlumTime">以当前时间</button>
+      </div>
+    </div>
+    <div class="m-setup hidden" id="setup-random">
+      <p class="m-hint">静心默念所问之事，点击后由程序随机生成六爻（含动爻）。</p>
+      <button class="m-btn-primary" id="mBtnRandom">心念起卦</button>
+    </div>
+
+    <div class="m-result" id="mResult">
+      <div class="m-empty">
+        <div class="m-empty-icon">卦</div>
+        <p>尚未起卦，选一种方法开始吧。</p>
+      </div>
+    </div>
+    <div class="m-anim hidden" id="mAnim"></div>
+  </section>
+
+  <!-- ============ 速查 ============ -->
+  <section class="m-view" id="view-quick">
+    <div class="m-view-head">
+      <h2>六十四卦速查</h2>
+      <p>点任意一卦看全文详解与白话。</p>
+    </div>
+    <div class="m-search">
+      <input type="text" id="mHexSearch" placeholder="搜索卦名、卦辞、关键词…">
+    </div>
+    <div id="mHexGrid" class="m-hex-grid"></div>
+  </section>
+
+  <!-- ============ 每日一卦 ============ -->
+  <section class="m-view" id="view-daily">
+    <div class="m-view-head">
+      <h2>每日一卦</h2>
+      <p>以今日日期为引，换种心情看今天。仅供趣味参考。</p>
+    </div>
+    <div class="m-daily-box" id="mDailyBox"></div>
+    <div class="m-btn-row" style="margin-top:14px">
+      <button class="m-btn-primary btn-sm" id="mBtnDailyToday">今日之卦</button>
+      <button class="m-btn-ghost btn-sm" id="mBtnDailyShuffle">换一卦</button>
+    </div>
+  </section>
+
+  <!-- ============ 学习 ============ -->
+  <section class="m-view" id="view-study">
+    <div class="m-view-head">
+      <h2>学习宝典</h2>
+      <p>零基础也能看懂的《周易》入门。</p>
+    </div>
+
+    <div class="m-study-nav" id="mStudyNav">
+      <button class="m-snav active" data-study="beginner">入门</button>
+      <button class="m-snav" data-study="classics">经文</button>
+      <button class="m-snav" data-study="seven">七则</button>
+      <button class="m-snav" data-study="methods">起卦</button>
+      <button class="m-snav" data-study="glossary">词典</button>
+      <button class="m-snav" data-study="stories">故事</button>
+    </div>
+
+    <div class="m-study-content">
+      <div class="m-sblock active" id="study-beginner">
+        <h3>零基础入门：10 分钟看懂《周易》</h3>
+        <details open><summary>1. 什么是「卦」？</summary>
+          <p>「卦」是一幅由六条横线组成的符号图。长横（━）叫<b>阳爻</b>，代表天、刚、动、积极；断横（╌）叫<b>阴爻</b>，代表地、柔、静、消极。六条爻上下组合共有 64 种图案，就是「六十四卦」。每卦有自己的卦辞和六条爻辞，相当于一套「人生情景说明书」。</p></details>
+        <details><summary>2. 算卦到底是什么？</summary>
+          <p>古人遇到拿不定主意的事，通过随机仪式（掷蓍草、摇铜钱）得到一卦，再用卦辞爻辞启发思考。它<u>不是</u>预知未来的魔法，而是「带着问题换角度思考」的古老智慧，像一面镜子帮你看清处境。</p></details>
+        <details><summary>3. 怎么起卦？</summary>
+          <p>「起卦」就是随机生成六条爻。本程序提供四种方法：<b>铜钱法</b>（摇六次，最常用）、<b>蓍草法</b>（最古老）、<b>梅花易数</b>（用时间或数字算）、<b>随机法</b>（一键最省事）。起卦前静心把问题想清楚即可。</p></details>
+        <details><summary>4. 什么是动爻、之卦？</summary>
+          <p>起卦时出现「老阳○」「老阴×」的爻叫<b>动爻</b>，表示这个位置要变化。爻一变，整卦变成另一幅图叫「之卦」。传统看卦：<b>没动爻看整卦卦辞，有动爻重点看动爻爻辞</b>。</p></details>
+        <details><summary>5. 怎么快速看懂结果？</summary>
+          <p>三步走：① 先看顶部橙色的「白话导读」，一句话知道这卦基调；② 再看「卦在说什么」和「变化提示」；③ 最后对照你问的事看「占断参考」里事业/感情/决策那一条。其他术语看不懂没关系，是进阶内容。</p></details>
+        <details><summary>6. 看完卦以后呢？</summary>
+          <p>把卦象当成一位老朋友的提醒：它帮你注意到可能忽略的角度，但<b>决定权永远在你手里</b>。当它是面镜子就好。</p></details>
+      </div>
+
+      <div class="m-sblock" id="study-classics">
+        <h3>经文详解</h3>
+        <div class="m-hex-nav">
+          <button class="m-btn-ghost btn-sm" id="mStudyPrev">‹ 上一卦</button>
+          <select id="mStudySelect"></select>
+          <button class="m-btn-ghost btn-sm" id="mStudyNext">下一卦 ›</button>
+        </div>
+        <div id="mStudyContent"></div>
+      </div>
+
+      <div class="m-sblock" id="study-seven">
+        <h3>解卦七则（朱熹《易学启蒙》）</h3>
+        <div class="m-principle"><span>一</span><div><b>六爻不变</b><p>以本卦卦辞断之。</p></div></div>
+        <div class="m-principle"><span>二</span><div><b>一爻变</b><p>以本卦变爻之爻辞断之。</p></div></div>
+        <div class="m-principle"><span>三</span><div><b>两爻变</b><p>以本卦两变爻爻辞断之，以上位之变爻为主。</p></div></div>
+        <div class="m-principle"><span>四</span><div><b>三爻变</b><p>占本卦及之卦卦辞，本卦为贞（主事者），之卦为悔（所趋）。</p></div></div>
+        <div class="m-principle"><span>五</span><div><b>四爻变</b><p>以之卦中两不变爻爻辞断之，以下位之不变爻为主。</p></div></div>
+        <div class="m-principle"><span>六</span><div><b>五爻变</b><p>以之卦中唯一不变爻之爻辞断之。</p></div></div>
+        <div class="m-principle"><span>七</span><div><b>六爻全变</b><p>乾坤二卦用「用九」「用六」断之；其余以之卦卦辞断之。</p></div></div>
+        <p class="m-note">简记：有变的看变化处，没变看整体。</p>
+      </div>
+
+      <div class="m-sblock" id="study-methods">
+        <h3>起卦方法详解</h3>
+        <details open><summary>一、三枚铜钱法（以钱代蓍）</summary>
+          <p>取三枚铜钱，掷一次记一爻，由下而上共六次。<br>
+          三背（○）＝老阳，动爻；二背一字（—）＝少阳；一背二字（--）＝少阴；三字（×）＝老阴，动爻。<br>
+          动爻阴阳互变，即成「之卦」。</p></details>
+        <details><summary>二、大衍筮法（蓍草法）</summary>
+          <p>《系辞》：大衍之数五十，其用四十有九。分二、挂一、揲四、归奇，三变得一爻，十八变而成一卦。<br>
+          余三十六根为老阳（九）、三十二为少阴（八）、二十八为少阳（七）、二十四为老阴（六）。</p></details>
+        <details><summary>三、梅花易数</summary>
+          <p>先天卦数：乾一、兑二、离三、震四、巽五、坎六、艮七、坤八。<br>
+          时间起卦：年月日之和除 8 得余数为上卦，再加时除 8 得下卦，总和除 6 得动爻。<br>
+          报数起卦：两数分别除 8 得上、下卦，和除 6 得动爻。</p></details>
+      </div>
+
+      <div class="m-sblock" id="study-glossary">
+        <h3>易学名词小词典</h3>
+        <div class="m-glossary">
+          <p><b>爻</b>组成卦的那条横线，一卦六爻。长横阳爻，断横阴爻。</p>
+          <p><b>本卦</b>起卦得到的卦，代表当下现状。</p>
+          <p><b>之卦</b>动爻变后形成的新卦，代表演变结果。</p>
+          <p><b>动爻</b>老阳○、老阴×那几条爻，表示关键变化点。</p>
+          <p><b>卦辞</b>整卦总说明；<b>爻辞</b>每爻的解释文字。</p>
+          <p><b>错卦</b>六爻全部阴阳颠倒，看事情的反面。</p>
+          <p><b>综卦</b>把卦上下倒过来看，看颠倒后的样子。</p>
+          <p><b>互卦</b>取中间四条爻重拼的卦，看中途过程。</p>
+          <p><b>体卦/用卦</b>体是你自己，用是你要面对的事，五行生克定吉凶。</p>
+          <p><b>元亨利贞</b>乾卦四字：开始、通达、有利、守正。</p>
+          <p><b>吉凶悔吝</b>四种占断：吉、凶、悔（可改）、吝（要小心）。</p>
+          <p><b>八宫</b>京房分六十四卦为八组，用于排六亲世应。</p>
+          <p><b>六亲</b>父母、兄弟、子孙、妻财、官鬼，各管一类事。</p>
+          <p><b>六神</b>青龙、朱雀、勾陈、螣蛇、白虎、玄武，按日干排列。</p>
+          <p><b>用九/用六</b>仅乾坤两卦有，六爻全变时使用。</p>
+        </div>
+      </div>
+
+      <div class="m-sblock" id="study-stories">
+        <h3>周易里的故事</h3>
+        <div class="m-story">
+          <b>文王拘而演《周易》</b>
+          <p>周文王被纣王囚于羑里，在狱中推演伏羲八卦为六十四卦。司马迁说"文王拘而演《周易》"，为逆境成大业第一例。</p>
+        </div>
+        <div class="m-story">
+          <b>韦编三绝</b>
+          <p>孔子晚年反复读《易》，把串竹简的牛皮绳磨断多次，并作注解《十翼》——像给经典插上十只翅膀。</p>
+        </div>
+        <div class="m-story">
+          <b>观梅占</b>
+          <p>宋代邵雍观梅见二雀争枝跌落，随手起卦断出"明晚有女孩来折花，受惊伤腿"，次日应验。这就是《梅花易数》的由来——万物皆可起卦。</p>
+        </div>
+        <div class="m-story">
+          <b>京房与纳甲</b>
+          <p>西汉京房把天干地支装进六十四卦，定八宫、世应、六亲、六神，让占筮有了完整排盘体系，影响后世一千多年。</p>
+        </div>
+        <div class="m-story">
+          <b>朱熹与《周易本义》</b>
+          <p>南宋朱熹主张"易本卜筮之书"，恢复上古筮法（即本程序蓍草法），并提出解卦七则，让占筮有了清晰的操作指南。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 记录 ============ -->
+  <section class="m-view" id="view-records">
+    <div class="m-view-head">
+      <h2>起卦记录</h2>
+      <p>记录保存在本机浏览器，与电脑版互通。点击记录可回看解卦。</p>
+      <div class="m-rec-actions">
+        <button class="m-btn-ghost btn-sm" id="mRecExport">导出</button>
+        <button class="m-btn-ghost btn-sm" id="mRecImport">导入</button>
+        <button class="m-btn-ghost btn-sm" id="mRecClear">清空</button>
+        <input type="file" id="mRecInput" accept=".json,application/json" style="display:none">
+      </div>
+    </div>
+    <div id="mRecords" class="m-records"></div>
+  </section>
+
+</main>
+
+<!-- 底部导航 -->
+<nav class="m-tabbar">
+  <button class="m-tab active" data-view="cast">起卦</button>
+  <button class="m-tab" data-view="quick">速查</button>
+  <button class="m-tab" data-view="daily">每日</button>
+  <button class="m-tab" data-view="study">学习</button>
+  <button class="m-tab" data-view="records">记录</button>
+</nav>
+
+<!-- 卦详情全屏视图 -->
+<div class="m-detail hidden" id="mDetail">
+  <div class="m-detail-head">
+    <button class="m-detail-close" id="mDetailClose">‹ 返回</button>
+    <div class="m-detail-title">卦象详解</div>
+    <span></span>
+  </div>
+  <div class="m-detail-body" id="mDetailBody"></div>
+</div>
+
+<script src="js/data_base.js?v=20260808d"></script>
+<script src="js/data_hex1.js?v=20260808d"></script>
+<script src="js/data_hex2.js?v=20260808d"></script>
+<script src="js/data_hex3.js?v=20260808d"></script>
+<script src="js/data_hex4.js?v=20260808d"></script>
+<script src="js/app_mobile.js?v=20260808d"></script>
+</body>
+</html>
