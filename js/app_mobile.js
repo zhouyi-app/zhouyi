@@ -722,7 +722,7 @@
       $all(".m-snav").forEach(x => x.classList.remove("active"));
       b.classList.add("active");
       $all(".m-sblock").forEach(x => x.classList.remove("active"));
-      $("#" + b.dataset.study).classList.add("active");
+      $("#study-" + b.dataset.study).classList.add("active");
     }));
     $("#mStudySelect").addEventListener("change", e => showStudyHex(+e.target.value));
     $("#mStudyPrev").addEventListener("click", () => showStudyHex(state.studyHexId === 1 ? 64 : state.studyHexId - 1));
